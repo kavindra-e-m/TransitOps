@@ -1,21 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Shield, Settings as SettingsIcon, Check, Minus, Lock, User, Info } from 'lucide-react';
+import { Shield, Settings as SettingsIcon, Check, Minus, Lock, User, Info, Eye, Edit } from 'lucide-react';
 
 import { getSettingsAPI, updateSettingsAPI, getRbacMatrixAPI } from '../api/settings';
 import { useAuth } from '../context/AuthContext';
+import { PERMISSIONS } from '../config/permissions';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 
 const ROLE_COLOR = {
   'Fleet Manager':     'text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]/20',
-  'Dispatcher':        'text-[#3B82F6] bg-[#3B82F6]/10 border-[#3B82F6]/20',
+  'Driver':            'text-[#60A5FA] bg-[#60A5FA]/10 border-[#60A5FA]/20',
+  'Dispatcher':        'text-[#60A5FA] bg-[#60A5FA]/10 border-[#60A5FA]/20',
   'Safety Officer':    'text-[#22C55E] bg-[#22C55E]/10 border-[#22C55E]/20',
   'Financial Analyst': 'text-[#F97316] bg-[#F97316]/10 border-[#F97316]/20',
 };
 
 const Settings = () => {
   const { user, role } = useAuth();
+
+  // Available roles for column rendering (must match PERMISSIONS keys)
+  const rolesList = ['Fleet Manager', 'Dispatcher', 'Safety Officer', 'Financial Analyst'];
 
   // General settings state
   const [depotName, setDepotName] = useState('Central Depot');
@@ -27,8 +32,20 @@ const Settings = () => {
   const [rbacMatrix, setRbacMatrix] = useState({});
   const [loading, setLoading] = useState(true);
 
-  // Available roles for column rendering
-  const rolesList = ['Fleet Manager', 'Dispatcher', 'Safety Officer', 'Financial Analyst'];
+
+
+  // My access modules derived from frontend permissions config
+  const myPermissions = PERMISSIONS[role] || {};
+  const moduleLabels = {
+    dashboard:    'Fleet Dashboard',
+    fleet:        'Fleet Registry',
+    drivers:      'Drivers Registry',
+    trips:        'Route Optimizer',
+    maintenance:  'Maintenance Logs',
+    fuelExpenses: 'Fuel & Expenses',
+    analytics:    'Fleet Analytics',
+    settings:     'System Settings',
+  };
 
   // Static list of unique capabilities to map against the roles' lists
   const capabilities = [
@@ -222,9 +239,12 @@ const Settings = () => {
             <table className="w-full text-left border-collapse text-xs select-none">
               <thead>
                 <tr className="bg-primary/40 border-b border-default text-[10px] font-bold text-secondary uppercase tracking-wider">
-                  <th className="p-3 font-semibold w-[35%]">Capability</th>
-                  {rolesList.map(role => (
-                    <th key={role} className="p-3 text-center font-semibold">{role}</th>
+              <th className="p-3 font-semibold w-[35%]">Capability</th>
+                  {rolesList.map(r => (
+                    <th key={r} className={`p-3 text-center font-semibold ${r === role ? 'text-accent' : ''}`}>
+                      {r}
+                      {r === role && <span className="ml-1 text-[8px] bg-accent/10 text-accent border border-accent/20 px-1 py-0.5 rounded-full">You</span>}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -236,15 +256,19 @@ const Settings = () => {
                       <div className="text-[10px] text-muted mt-0.5">{cap.desc}</div>
                     </td>
                     
-                    {rolesList.map((role) => {
-                      const allowed = rbacMatrix[role]?.includes(cap.key) ||
-                                      rbacMatrix[role]?.includes(cap.key.replace('manage_', 'view_')) ||
-                                      (cap.key.startsWith('view_') && rbacMatrix[role]?.includes(cap.key.replace('view_', 'manage_')));
+                    {rolesList.map((r) => {
+                      const allowed = rbacMatrix[r]?.includes(cap.key) ||
+                                      rbacMatrix[r]?.includes(cap.key.replace('manage_', 'view_')) ||
+                                      (cap.key.startsWith('view_') && rbacMatrix[r]?.includes(cap.key.replace('view_', 'manage_')));
                       return (
-                        <td key={role} className="p-3 text-center align-middle">
+                        <td key={r} className={`p-3 text-center align-middle ${r === role ? 'bg-accent/5' : ''}`}>
                           <div className="flex items-center justify-center">
                             {allowed ? (
-                              <div className="w-5 h-5 rounded-full bg-status-available/10 text-status-available border border-status-available/20 flex items-center justify-center font-bold">
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold ${
+                                r === role
+                                  ? 'bg-accent/20 text-accent border border-accent/30'
+                                  : 'bg-status-available/10 text-status-available border border-status-available/20'
+                              }`}>
                                 <Check size={11} strokeWidth={3} />
                               </div>
                             ) : (
@@ -261,6 +285,38 @@ const Settings = () => {
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      {/* My Access Summary Card — live from frontend permissions config */}
+      <div className="p-6 rounded-xl border border-default bg-card space-y-4">
+        <div className="flex items-center justify-between border-b border-default pb-2.5 mb-2 select-none">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+            <Lock size={16} className="text-accent" />
+            My Module Access
+          </h3>
+          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border ${ROLE_COLOR[role] ?? 'text-muted bg-card border-default'}`}>
+            {role}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {Object.entries(myPermissions).map(([module, level]) => (
+            <div
+              key={module}
+              className={`p-3 rounded-lg border text-xs space-y-1 ${
+                level === 'edit' ? 'bg-status-available/5 border-status-available/20' :
+                level === 'view' ? 'bg-accent/5 border-accent/15' :
+                'bg-status-retired/5 border-status-retired/20'
+              }`}
+            >
+              <p className="text-[9px] font-bold uppercase tracking-wider text-muted">{moduleLabels[module] || module}</p>
+              <div className="flex items-center gap-1 mt-1">
+                {level === 'edit' && <><Edit size={10} className="text-status-available shrink-0" /><span className="font-bold text-status-available">Full Edit</span></>}
+                {level === 'view' && <><Eye size={10} className="text-accent shrink-0" /><span className="font-bold text-accent">View Only</span></>}
+                {level === 'none' && <><Minus size={10} className="text-status-retired shrink-0" /><span className="font-bold text-status-retired">No Access</span></>}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

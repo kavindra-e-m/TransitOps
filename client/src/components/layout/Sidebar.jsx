@@ -1,30 +1,43 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Truck, Users, Route, Wrench,
-  Fuel, BarChart2, Settings, HelpCircle, AlertOctagon, Map
+  Fuel, BarChart2, Settings, HelpCircle, AlertOctagon, Map, Lock, LogOut
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { getPermission } from '../../config/permissions';
 
 const NAV = [
-  { to: '/dashboard', label: 'Fleet Overview', icon: LayoutDashboard },
-  { to: '/map', label: 'Fleet Map', icon: Map },
-  { to: '/fleet', label: 'Fleet Registry', icon: Truck },
-  { to: '/drivers', label: 'Drivers Registry', icon: Users },
-  { to: '/trips', label: 'Route Optimizer', icon: Route },
-  { to: '/maintenance', label: 'Maintenance Logs', icon: Wrench },
-  { to: '/fuel-expenses', label: 'Fuel & Expenses', icon: Fuel },
-  { to: '/analytics', label: 'Fleet Analytics', icon: BarChart2 },
+  { to: '/dashboard',    label: 'Fleet Overview',   icon: LayoutDashboard, module: 'dashboard'    },
+  { to: '/map',          label: 'Fleet Map',         icon: Map,             module: null           }, // always visible
+  { to: '/fleet',        label: 'Fleet Registry',    icon: Truck,           module: 'fleet'        },
+  { to: '/drivers',      label: 'Drivers Registry',  icon: Users,           module: 'drivers'      },
+  { to: '/trips',        label: 'Route Optimizer',   icon: Route,           module: 'trips'        },
+  { to: '/maintenance',  label: 'Maintenance Logs',  icon: Wrench,          module: 'maintenance'  },
+  { to: '/fuel-expenses',label: 'Fuel & Expenses',   icon: Fuel,            module: 'fuelExpenses' },
+  { to: '/analytics',    label: 'Fleet Analytics',   icon: BarChart2,       module: 'analytics'    },
 ];
 
 const Sidebar = () => {
   const { pathname } = useLocation();
-  const { user, role } = useAuth();
+  const { user, role, logout } = useAuth();
+  const navigate = useNavigate();
   
   const initials = user?.name
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase()
     : 'JD';
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
+
+  // Filter out nav items where the role has 'none' permission
+  const visibleNav = NAV.filter(item => {
+    if (!item.module) return true; // null module = always visible (e.g. Map)
+    return getPermission(role, item.module) !== 'none';
+  });
 
   return (
     <aside className="fixed top-0 left-0 h-full w-[240px] bg-sidebar border-r border-outline-variant flex flex-col z-[60]">
@@ -43,8 +56,10 @@ const Sidebar = () => {
 
       {/* Nav Menu */}
       <nav className="flex-1 mt-4 px-3 space-y-1">
-        {NAV.map(({ to, label, icon: Icon }) => {
+        {visibleNav.map(({ to, label, icon: Icon, module }) => {
           const active = pathname === to;
+          const permLevel = module ? getPermission(role, module) : 'edit';
+          const isViewOnly = permLevel === 'view';
           return (
             <NavLink 
               key={to} 
@@ -66,7 +81,11 @@ const Sidebar = () => {
                 size={16} 
                 className={active ? 'text-accent' : 'text-secondary group-hover:text-primary transition-colors'} 
               />
-              <span className="font-medium capitalize">{label}</span>
+              <span className="font-medium capitalize flex-1">{label}</span>
+              {/* Lock icon for view-only modules */}
+              {isViewOnly && (
+                <Lock size={10} className="text-muted/60 shrink-0" />
+              )}
             </NavLink>
           );
         })}
@@ -100,14 +119,23 @@ const Sidebar = () => {
           Support
         </div>
 
-        {/* User Signature Details */}
-        <div className="mt-4 flex items-center gap-3 px-7 pt-3 border-t border-outline-variant/30 select-none">
-          <div className="w-8 h-8 rounded-full bg-card border border-accent/20 flex items-center justify-center text-accent text-xs font-bold font-mono">
-            {initials}
-          </div>
-          <div className="flex flex-col leading-tight">
-            <span className="text-xs font-bold text-primary">{user?.name || 'Dispatcher'}</span>
-            <span className="text-[10px] text-secondary font-medium">{role || 'Operations'}</span>
+        {/* User Signature + Logout */}
+        <div className="mt-4 border-t border-outline-variant/30 pt-3">
+          <div className="flex items-center gap-3 px-4 select-none">
+            <div className="w-8 h-8 rounded-full bg-card border border-accent/20 flex items-center justify-center text-accent text-xs font-bold font-mono shrink-0">
+              {initials}
+            </div>
+            <div className="flex flex-col leading-tight flex-1 min-w-0">
+              <span className="text-xs font-bold text-primary truncate">{user?.name || 'Dispatcher'}</span>
+              <span className="text-[10px] text-secondary font-medium truncate">{role || 'Operations'}</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Log out"
+              className="ml-auto shrink-0 w-7 h-7 rounded-md flex items-center justify-center text-muted hover:text-status-retired hover:bg-status-retired/10 transition-colors"
+            >
+              <LogOut size={14} />
+            </button>
           </div>
         </div>
       </div>

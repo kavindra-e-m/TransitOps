@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { 
@@ -10,6 +10,7 @@ import {
   useVehicles, useDrivers, useTrips, useAppActions, useMaintenance, useExpenses
 } from '../context/AppContext';
 import { scoreVehicles, scoreDrivers } from '../utils/insights';
+import { usePermission } from '../hooks/usePermission';
 import KPICard from '../components/common/KPICard';
 import StatusBadge from '../components/common/StatusBadge';
 import DataTable from '../components/common/DataTable';
@@ -32,6 +33,7 @@ const Trips = () => {
   const expenses = useExpenses();
   
   const { dispatchTrip, completeTrip, cancelTrip } = useAppActions();
+  const { canEdit } = usePermission('trips');
 
   // Selection states
   const [selectedTripId, setSelectedTripId] = useState(null);
@@ -301,10 +303,12 @@ const Trips = () => {
           <h2 className="text-xl font-bold text-primary">Dispatches & Routes</h2>
           <p className="text-xs text-secondary">Dispatch logistics routes and manage trip execution stages.</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus size={16} />
-          Create Dispatch
-        </Button>
+        {canEdit && (
+          <Button onClick={() => setIsModalOpen(true)}>
+            <Plus size={16} />
+            Create Dispatch
+          </Button>
+        )}
       </div>
 
       {/* KPI Stats */}
@@ -718,8 +722,8 @@ const Trips = () => {
                 </div>
               </div>
 
-              {/* Bottom life-cycle control buttons */}
-              {selectedTripObj.status === 'Dispatched' && (
+              {/* Bottom life-cycle control buttons — only for edit roles */}
+              {canEdit && selectedTripObj.status === 'Dispatched' && (
                 <div className="mt-auto border-t border-default pt-4 flex gap-3 select-none">
                   {/* Cancel dispatch */}
                   <Button
