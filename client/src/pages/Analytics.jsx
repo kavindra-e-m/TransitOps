@@ -5,15 +5,17 @@ import {
   BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, Bar as RechartsBar 
 } from 'recharts';
-import { Download, TrendingUp, Coins, Activity, Percent, Calendar } from 'lucide-react';
+import { Download, TrendingUp, Coins, Activity, Percent, ShieldOff } from 'lucide-react';
 
 import { getAnalyticsSummaryAPI, getMonthlyRevenueAPI, getTopCostliestVehiclesAPI } from '../api/analytics';
+import AnalyticsKPICard from '../components/analytics/AnalyticsKPICard';
 
 const Analytics = () => {
   const [summary, setSummary] = useState(null);
   const [monthlyRevenue, setMonthlyRevenue] = useState([]);
   const [costliestVehicles, setCostliestVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   // Fetch all analytics datasets
   useEffect(() => {
@@ -28,8 +30,13 @@ const Analytics = () => {
         setMonthlyRevenue(revData);
         setCostliestVehicles(costData);
       } catch (err) {
-        console.error("Failed to load analytics metrics", err);
-        toast.error("Failed to load analytics metrics from backend.");
+        // 403 means the logged-in role does not have view_analytics permission
+        if (err.response?.status === 403) {
+          setAccessDenied(true);
+        } else {
+          console.error("Failed to load analytics metrics", err);
+          toast.error("Failed to load analytics metrics from backend.");
+        }
       } finally {
         setLoading(false);
       }
@@ -86,6 +93,20 @@ const Analytics = () => {
     );
   }
 
+  if (accessDenied) {
+    return (
+      <div className="flex h-64 items-center justify-center select-none">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <ShieldOff size={32} className="text-status-retired" />
+          <p className="text-sm font-semibold text-text-primary">Access Restricted</p>
+          <p className="text-xs text-text-muted max-w-xs">
+            Analytics data is only available to Fleet Managers and Financial Analysts.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Costliest bar max value for width percentages
   const maxCost = costliestVehicles.length > 0 ? Math.max(...costliestVehicles.map(v => v.totalCost)) : 1;
 
@@ -106,63 +127,40 @@ const Analytics = () => {
         </button>
       </div>
 
-      {/* 4 Metric cards top (formula shown as subtext) */}
+      {/* 4 KPI Cards — data from GET /api/analytics/summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* KPI 1 */}
-        <div className="bg-card rounded-xl border border-default border-l-4 border-l-[#3B82F6] p-5 transition-all hover:bg-card-hover select-none">
-          <div className="flex items-center justify-between text-text-secondary">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Fuel Efficiency</span>
-            <TrendingUp size={16} className="text-[#3B82F6]" />
-          </div>
-          <h3 className="font-mono text-2xl font-bold text-text-primary mt-2">
-            {summary?.fuelEfficiency} <span className="text-xs font-sans font-medium text-text-muted">L/100km</span>
-          </h3>
-          <p className="text-[10px] text-text-muted mt-2 font-medium italic border-t border-default/40 pt-2">
-            Efficiency = avg liters / 100km
-          </p>
-        </div>
-
-        {/* KPI 2 */}
-        <div className="bg-card rounded-xl border border-default border-l-4 border-l-[#22C55E] p-5 transition-all hover:bg-card-hover select-none">
-          <div className="flex items-center justify-between text-text-secondary">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Fleet Utilization</span>
-            <Activity size={16} className="text-[#22C55E]" />
-          </div>
-          <h3 className="font-mono text-2xl font-bold text-text-primary mt-2">
-            {summary?.fleetUtilization.toFixed(1)}<span className="text-xs font-sans font-medium text-text-muted">%</span>
-          </h3>
-          <p className="text-[10px] text-text-muted mt-2 font-medium italic border-t border-default/40 pt-2">
-            Utilization = active / total vehicles
-          </p>
-        </div>
-
-        {/* KPI 3 */}
-        <div className="bg-card rounded-xl border border-default border-l-4 border-l-[#F97316] p-5 transition-all hover:bg-card-hover select-none">
-          <div className="flex items-center justify-between text-text-secondary">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Operational Cost</span>
-            <Coins size={16} className="text-[#F97316]" />
-          </div>
-          <h3 className="font-mono text-2xl font-bold text-text-primary mt-2">
-            ${summary?.operationalCost.toLocaleString()}
-          </h3>
-          <p className="text-[10px] text-text-muted mt-2 font-medium italic border-t border-default/40 pt-2">
-            Cost = Fuel + Maint + Expenses
-          </p>
-        </div>
-
-        {/* KPI 4 */}
-        <div className="bg-card rounded-xl border border-default border-l-4 border-l-[#F59E0B] p-5 transition-all hover:bg-card-hover select-none">
-          <div className="flex items-center justify-between text-text-secondary">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Vehicle ROI</span>
-            <Percent size={16} className="text-[#F59E0B]" />
-          </div>
-          <h3 className="font-mono text-2xl font-bold text-text-primary mt-2">
-            {(summary?.vehicleROI * 100).toFixed(1)}<span className="text-xs font-sans font-medium text-text-muted">%</span>
-          </h3>
-          <p className="text-[10px] text-text-muted mt-2 font-medium italic border-t border-default/40 pt-2">
-            ROI = (Revenue − (Maint + Fuel)) / Acq Cost
-          </p>
-        </div>
+        <AnalyticsKPICard
+          label="Fuel Efficiency"
+          value={summary?.fuelEfficiency ?? 0}
+          icon={<TrendingUp size={16} />}
+          color="blue"
+          suffix="L/100km"
+          formula="Efficiency = avg liters / 100km"
+        />
+        <AnalyticsKPICard
+          label="Fleet Utilization"
+          value={summary ? parseFloat(summary.fleetUtilization.toFixed(1)) : 0}
+          icon={<Activity size={16} />}
+          color="green"
+          suffix="%"
+          formula="Utilization = active / total vehicles"
+        />
+        <AnalyticsKPICard
+          label="Operational Cost"
+          value={summary?.operationalCost ?? 0}
+          icon={<Coins size={16} />}
+          color="orange"
+          prefix="$"
+          formula="Cost = Fuel + Maint + Expenses"
+        />
+        <AnalyticsKPICard
+          label="Vehicle ROI"
+          value={summary ? parseFloat((summary.vehicleROI * 100).toFixed(1)) : 0}
+          icon={<Percent size={16} />}
+          color="amber"
+          suffix="%"
+          formula="ROI = (Revenue − (Maint + Fuel)) / Acq Cost"
+        />
       </div>
 
       {/* Charts Grid */}
