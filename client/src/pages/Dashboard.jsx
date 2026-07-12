@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { useVehicles } from '../context/AppContext';
-import { useDrivers } from '../context/AppContext';
-import { useTrips } from '../context/AppContext';
+import { useVehicles, useDrivers, useTrips, useIsLive } from '../context/AppContext';
 import KPICard from '../components/common/KPICard';
 import DataTable from '../components/common/DataTable';
 import StatusBadge from '../components/common/StatusBadge';
@@ -29,6 +27,7 @@ const Dashboard = () => {
   const allVehicles = useVehicles();
   const allDrivers = useDrivers();
   const allTrips = useTrips();
+  const isLive = useIsLive();
 
   const [typeFilter, setTypeFilter] = useState('All Types');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
@@ -142,10 +141,20 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Last updated */}
-      <p className="text-xs text-text-muted text-right">
-        Last updated {secondsAgo}s ago
-      </p>
+      {/* Real-time Status Badge */}
+      <div className="flex items-center justify-end gap-2 text-[10px] font-bold uppercase tracking-wider select-none">
+        {isLive ? (
+          <div className="flex items-center gap-1.5 text-status-available bg-status-available/10 border border-status-available/20 rounded-full px-3 py-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-status-available animate-pulse" />
+            Live Telemetry Active
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 text-text-muted bg-border-default/20 border border-default rounded-full px-3 py-1 animate-pulse">
+            <span className="w-1.5 h-1.5 rounded-full bg-text-muted" />
+            Reconnecting to Server...
+          </div>
+        )}
+      </div>
     </div>
   );
 };

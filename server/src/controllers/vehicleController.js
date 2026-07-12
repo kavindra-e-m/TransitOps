@@ -34,6 +34,10 @@ exports.create = (req, res) => {
     const info = insert.run(reg_no, name, type, capacity, odometer || 0, acquisition_cost, 'Available');
     
     const newVehicle = db.prepare('SELECT * FROM vehicles WHERE id = ?').get(info.lastInsertRowid);
+    
+    const io = req.app.get('io');
+    io.emit('telemetry_update', { type: 'VEHICLE_UPDATED', payload: newVehicle });
+
     res.status(201).json(newVehicle);
   } catch (err) {
     res.status(500).json({ error: 'Failed to create vehicle.' });
@@ -48,11 +52,16 @@ exports.update = (req, res) => {
     update.run(name, type, capacity, odometer, acquisition_cost, status, id);
     const updated = db.prepare('SELECT * FROM vehicles WHERE id = ?').get(id);
     if (!updated) return res.status(404).json({ error: 'Vehicle not found' });
+
+    const io = req.app.get('io');
+    io.emit('telemetry_update', { type: 'VEHICLE_UPDATED', payload: updated });
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: 'Failed to update vehicle.' });
   }
 };
+
 
 exports.getHistory = (req, res) => {
   const { id } = req.params;
