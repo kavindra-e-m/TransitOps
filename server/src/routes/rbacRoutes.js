@@ -1,1 +1,9 @@
-const express = require('express'); const router = express.Router(); router.get('/rbac-matrix', (req, res) => res.json({ 'Fleet Manager': ['manage_vehicles'], 'Dispatcher': ['dispatch_trips'] })); module.exports = router;
+const express = require('express');
+const router = express.Router();
+const rbacController = require('../controllers/rbacController');
+const auth = require('../middleware/auth');
+
+router.use(auth);
+router.get('/rbac-matrix', rbacController.getRbacMatrix);
+
+module.exports = router;
