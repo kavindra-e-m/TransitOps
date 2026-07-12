@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useVehicles, useDrivers, useTrips, useIsLive, useMaintenance } from '../context/AppContext';
 import StatusBadge from '../components/common/StatusBadge';
+import KPICard from '../components/common/KPICard';
 import { getLicenseAlertDrivers, getMaintenanceAlertVehicles } from '../utils/insights';
 import { 
   TrendingUp, TrendingDown, CheckCircle, Leaf, AlertTriangle, 
-  MapPin, Clock, ShieldCheck, Zap, ChevronRight, Play, CheckSquare, XCircle, ShieldAlert, Wrench
+  MapPin, Clock, ShieldCheck, Zap, ChevronRight, Play, CheckSquare, XCircle, ShieldAlert, Wrench,
+  Truck, Users, Route, Activity
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -97,156 +99,150 @@ const Dashboard = () => {
   }, [allTrips, filteredVehicles]);
 
   return (
-    <div className="p-6 bg-[#0B0E14] min-h-screen text-primary">
+    <div className="p-6 min-h-screen text-primary">
       <div className="grid grid-cols-12 gap-6">
         
         {/* LEFT COLUMN: KEY METRICS & MAP & TABLES (col-span-9) */}
         <div className="col-span-12 lg:col-span-9 space-y-6">
           
-          {/* Filters Bar */}
-          <div className="bg-card border border-outline-variant p-4 rounded-xl flex flex-wrap items-center justify-between gap-4 select-none">
-            <div className="flex flex-col">
-              <h3 className="text-xs font-bold text-primary uppercase tracking-wide">Fleet filters</h3>
-              <p className="text-[10px] text-secondary">Filter telemetry KPIs in real-time</p>
+          {/* ── Filters Bar (pill buttons) ── */}
+          <div
+            className="rounded-2xl px-5 py-3.5 flex flex-wrap items-center justify-between gap-4 select-none"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)' }}
+          >
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--text-primary)' }}>Fleet Filters</h3>
+              <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Filter telemetry KPIs in real-time</p>
             </div>
-            
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Type Filter */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-muted">Vehicle Type</label>
-                <select 
-                  value={filterType} 
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="bg-surface-container-lowest border border-outline-variant rounded px-2.5 py-1 text-xs text-primary outline-none focus:border-accent"
-                >
-                  {vehicleTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
+
+            <div className="flex flex-wrap items-center gap-5">
+              {/* Type filter pills */}
+              <div className="flex flex-col gap-1.5">
+                <span className="section-label">Vehicle Type</span>
+                <div className="flex gap-1">
+                  {vehicleTypes.map(t => (
+                    <button
+                      key={t}
+                      onClick={() => setFilterType(t)}
+                      className="px-3 py-1 rounded-lg text-[11px] font-semibold transition-all duration-150"
+                      style={{
+                        background: filterType === t ? 'rgba(255,193,116,0.15)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${filterType === t ? 'rgba(255,193,116,0.4)' : 'var(--border-default)'}`,
+                        color: filterType === t ? 'var(--accent)' : 'var(--text-secondary)',
+                      }}
+                    >{t}</button>
+                  ))}
+                </div>
               </div>
 
-              {/* Status Filter */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-muted">Vehicle Status</label>
-                <select 
-                  value={filterStatus} 
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="bg-surface-container-lowest border border-outline-variant rounded px-2.5 py-1 text-xs text-primary outline-none focus:border-accent"
-                >
-                  {vehicleStatuses.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+              {/* Status filter pills */}
+              <div className="flex flex-col gap-1.5">
+                <span className="section-label">Status</span>
+                <div className="flex gap-1">
+                  {vehicleStatuses.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setFilterStatus(s)}
+                      className="px-3 py-1 rounded-lg text-[11px] font-semibold transition-all duration-150"
+                      style={{
+                        background: filterStatus === s ? 'rgba(255,193,116,0.15)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${filterStatus === s ? 'rgba(255,193,116,0.4)' : 'var(--border-default)'}`,
+                        color: filterStatus === s ? 'var(--accent)' : 'var(--text-secondary)',
+                      }}
+                    >{s}</button>
+                  ))}
+                </div>
               </div>
 
-              {/* Region Filter */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-muted">Region</label>
-                <select 
-                  value={filterRegion} 
-                  onChange={(e) => setFilterRegion(e.target.value)}
-                  className="bg-surface-container-lowest border border-outline-variant rounded px-2.5 py-1 text-xs text-primary outline-none focus:border-accent"
-                >
-                  {regionsList.map(r => <option key={r} value={r}>{r}</option>)}
-                </select>
+              {/* Region filter pills */}
+              <div className="flex flex-col gap-1.5">
+                <span className="section-label">Region</span>
+                <div className="flex gap-1">
+                  {regionsList.map(r => (
+                    <button
+                      key={r}
+                      onClick={() => setFilterRegion(r)}
+                      className="px-3 py-1 rounded-lg text-[11px] font-semibold transition-all duration-150"
+                      style={{
+                        background: filterRegion === r ? 'rgba(255,193,116,0.15)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${filterRegion === r ? 'rgba(255,193,116,0.4)' : 'var(--border-default)'}`,
+                        color: filterRegion === r ? 'var(--accent)' : 'var(--text-secondary)',
+                      }}
+                    >{r}</button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Key Metrics Bento Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            
-            {/* Card 1: Fleet Utilization */}
-            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">Fleet Utilization</p>
-                <h2 className="font-mono text-3xl font-bold text-accent">{kpis.fleetUtilization}%</h2>
-              </div>
-              <div className="flex items-center mt-4 text-[#51e77b] text-[11px] font-semibold">
-                <TrendingUp size={14} className="mr-1" />
-                <span>Active on road</span>
-              </div>
-            </div>
-
-            {/* Card 2: Active Vehicles */}
-            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">Active Vehicles</p>
-                <h2 className="font-mono text-3xl font-bold text-primary">{kpis.activeVehicles}</h2>
-              </div>
-              <div className="flex items-center mt-4 text-[#51e77b] text-[11px] font-semibold">
-                <TrendingUp size={14} className="mr-1" />
-                <span>Non-retired fleet</span>
-              </div>
-            </div>
-
-            {/* Card 3: Available Vehicles */}
-            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">Available Vehicles</p>
-                <h2 className="font-mono text-3xl font-bold text-primary">{kpis.availableVehicles}</h2>
-              </div>
-              <div className="flex items-center mt-4 text-[#51e77b] text-[11px] font-semibold">
-                <CheckCircle size={14} className="mr-1" />
-                <span>Ready for dispatch</span>
-              </div>
-            </div>
-
-            {/* Card 4: Vehicles in Maintenance */}
-            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">In Maintenance</p>
-                <h2 className="font-mono text-3xl font-bold text-primary">{kpis.vehiclesInMaintenance}</h2>
-              </div>
-              <div className="flex items-center mt-4 text-[#f97316] text-[11px] font-semibold">
-                <Wrench size={14} className="mr-1" />
-                <span>Currently in shop</span>
-              </div>
-            </div>
-
-            {/* Card 5: Active Trips */}
-            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">Active Trips</p>
-                <h2 className="font-mono text-3xl font-bold text-primary">{kpis.activeTrips}</h2>
-              </div>
-              <div className="flex items-center mt-4 text-[#adc6ff] text-[11px] font-semibold">
-                <Play size={14} className="mr-1" />
-                <span>Dispatched routes</span>
-              </div>
-            </div>
-
-            {/* Card 6: Pending Trips */}
-            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">Pending Trips</p>
-                <h2 className="font-mono text-3xl font-bold text-primary">{kpis.pendingTrips}</h2>
-              </div>
-              <div className="flex items-center mt-4 text-muted text-[11px] font-semibold">
-                <Clock size={14} className="mr-1" />
-                <span>Draft itineraries</span>
-              </div>
-            </div>
-
-            {/* Card 7: Drivers On Duty */}
-            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">Drivers On Duty</p>
-                <h2 className="font-mono text-3xl font-bold text-primary">{kpis.driversOnDuty}</h2>
-              </div>
-              <div className="flex items-center mt-4 text-[#51e77b] text-[11px] font-semibold">
-                <ShieldCheck size={14} className="mr-1" />
-                <span>Operators active/standby</span>
-              </div>
-            </div>
-
-            {/* Card 8: On-Time Performance */}
-            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">On-Time Performance</p>
-                <h2 className="font-mono text-3xl font-bold text-primary">{stats.onTimePct}%</h2>
-              </div>
-              <div className="flex items-center mt-4 text-[#ffb4ab] text-[11px] font-semibold">
-                <TrendingDown size={14} className="mr-1" />
-                <span>Stable operations</span>
-              </div>
-            </div>
+          {/* ── Key Metrics Grid ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KPICard
+              label="Fleet Utilization"
+              value={kpis.fleetUtilization}
+              suffix="%"
+              icon={Activity}
+              color="amber"
+              trend={1}
+              trendLabel="Active on road"
+            />
+            <KPICard
+              label="Active Vehicles"
+              value={kpis.activeVehicles}
+              icon={Truck}
+              color="green"
+              trend={1}
+              trendLabel="Non-retired fleet"
+            />
+            <KPICard
+              label="Available Vehicles"
+              value={kpis.availableVehicles}
+              icon={CheckCircle}
+              color="green"
+              trend={0}
+              trendLabel="Ready for dispatch"
+            />
+            <KPICard
+              label="In Maintenance"
+              value={kpis.vehiclesInMaintenance}
+              icon={Wrench}
+              color="orange"
+              trend={-1}
+              trendLabel="Currently in shop"
+            />
+            <KPICard
+              label="Active Trips"
+              value={kpis.activeTrips}
+              icon={Route}
+              color="blue"
+              trend={1}
+              trendLabel="Dispatched routes"
+            />
+            <KPICard
+              label="Pending Trips"
+              value={kpis.pendingTrips}
+              icon={Clock}
+              color="muted"
+              trend={0}
+              trendLabel="Draft itineraries"
+            />
+            <KPICard
+              label="Drivers On Duty"
+              value={kpis.driversOnDuty}
+              icon={Users}
+              color="green"
+              trend={1}
+              trendLabel="Active & standby"
+            />
+            <KPICard
+              label="On-Time Performance"
+              value={stats.onTimePct}
+              suffix="%"
+              icon={ShieldCheck}
+              color="blue"
+              trend={0}
+              trendLabel="Stable operations"
+            />
 
           </div>
 
