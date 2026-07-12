@@ -9,5 +9,5 @@ export const getMonthlyRevenueAPI = () => {
 };
 
 export const getTopCostliestVehiclesAPI = () => {
-  return client.get('/analytics/costliest-vehicles').then(res => res.data);
+  return client.get('/analytics/top-costliest-vehicles').then(res => res.data);
 };

@@ -9,5 +9,5 @@ export const updateSettingsAPI = (settingsData) => {
 };
 
 export const getRbacMatrixAPI = () => {
-  return client.get('/rbac').then(res => res.data);
+  return client.get('/rbac/rbac-matrix').then(res => res.data);
 };
