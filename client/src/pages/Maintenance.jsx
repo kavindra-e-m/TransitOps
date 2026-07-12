@@ -5,6 +5,7 @@ import { Plus, Wrench, AlertCircle, CheckCircle2, ChevronRight, AlertTriangle, X
 
 import { useMaintenance, useVehicles, useAppActions } from '../context/AppContext';
 import { getPredictiveMaintenance } from '../utils/insights';
+import { usePermission } from '../hooks/usePermission';
 import KPICard from '../components/common/KPICard';
 import StatusBadge from '../components/common/StatusBadge';
 import DataTable from '../components/common/DataTable';
@@ -16,6 +17,7 @@ const Maintenance = () => {
   const logs = useMaintenance();
   const vehicles = useVehicles();
   const { addMaintenanceRecord, closeMaintenanceRecord } = useAppActions();
+  const { canEdit } = usePermission('maintenance');
 
   // Selection states
   const [selectedLogId, setSelectedLogId] = useState(null);
@@ -130,10 +132,12 @@ const Maintenance = () => {
           <h2 className="text-xl font-bold text-primary">Maintenance Scheduling</h2>
           <p className="text-xs text-secondary">Log vehicle servicing events, schedule repairs, and release vehicles to service.</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus size={16} />
-          Log Maintenance
-        </Button>
+        {canEdit && (
+          <Button onClick={() => setIsModalOpen(true)}>
+            <Plus size={16} />
+            Log Maintenance
+          </Button>
+        )}
       </div>
 
       {/* KPI Cards */}
@@ -473,8 +477,8 @@ const Maintenance = () => {
                   </div>
                 </div>
 
-                {/* Release/Close Action button */}
-                {selectedLogObj.status === 'Active' && (
+                {/* Release/Close Action button — only for edit roles */}
+                {canEdit && selectedLogObj.status === 'Active' && (
                   <Button
                     onClick={() => handleCloseRecord(selectedLogObj.id)}
                     className="w-full mt-6"

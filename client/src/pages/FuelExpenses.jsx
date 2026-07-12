@@ -5,6 +5,7 @@ import { Plus, Fuel, DollarSign, Calendar, Truck, AlertTriangle } from 'lucide-r
 
 import { useExpenses, useVehicles, useTrips, useAppActions } from '../context/AppContext';
 import { detectFuelAnomalies } from '../utils/insights';
+import { usePermission } from '../hooks/usePermission';
 import KPICard from '../components/common/KPICard';
 import DataTable from '../components/common/DataTable';
 import Modal from '../components/common/Modal';
@@ -16,6 +17,7 @@ const FuelExpenses = () => {
   const vehicles = useVehicles();
   const trips = useTrips();
   const { addExpense } = useAppActions();
+  const { canEdit } = usePermission('fuelExpenses');
 
   // Filters State
   const [selectedVehicleFilter, setSelectedVehicleFilter] = useState("All");
@@ -232,16 +234,18 @@ const FuelExpenses = () => {
           <h2 className="text-xl font-bold text-primary">Fuel & Expenses</h2>
           <p className="text-xs text-secondary">Log fuel refills and other auxiliary route costs to audit operational spendings.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button onClick={() => setIsFuelModalOpen(true)} className="bg-status-available/15 hover:bg-status-available/25 border border-status-available/30 text-status-available">
-            <Fuel size={16} />
-            Refill Fuel
-          </Button>
-          <Button onClick={() => setIsExpenseModalOpen(true)}>
-            <DollarSign size={16} />
-            Log Expense
-          </Button>
-        </div>
+        {canEdit && (
+          <div className="flex items-center gap-3">
+            <Button onClick={() => setIsFuelModalOpen(true)} className="bg-status-available/15 hover:bg-status-available/25 border border-status-available/30 text-status-available">
+              <Fuel size={16} />
+              Refill Fuel
+            </Button>
+            <Button onClick={() => setIsExpenseModalOpen(true)}>
+              <DollarSign size={16} />
+              Log Expense
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* KPI Stats */}

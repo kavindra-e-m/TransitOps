@@ -6,6 +6,7 @@ import { Plus, Search, X, Truck, Wrench, Calendar, Compass, DollarSign } from 'l
 import { useVehicles, useTrips, useMaintenance, useAppActions, useExpenses } from '../context/AppContext';
 import { checkRegUniqueAPI } from '../api/vehicles';
 import { calculateVehicleHealth, getPredictiveMaintenance } from '../utils/insights';
+import { usePermission } from '../hooks/usePermission';
 import KPICard from '../components/common/KPICard';
 import StatusBadge from '../components/common/StatusBadge';
 import DataTable from '../components/common/DataTable';
@@ -19,6 +20,7 @@ const Fleet = () => {
   const maintenance = useMaintenance();
   const expenses = useExpenses();
   const { addVehicle } = useAppActions();
+  const { canEdit } = usePermission('fleet');
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState("");
@@ -189,10 +191,12 @@ const Fleet = () => {
           <h2 className="text-xl font-bold text-primary">Fleet Overview</h2>
           <p className="text-xs text-secondary">Register, monitor, and audit your fleet inventory.</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus size={16} />
-          Add Vehicle
-        </Button>
+        {canEdit && (
+          <Button onClick={() => setIsModalOpen(true)}>
+            <Plus size={16} />
+            Add Vehicle
+          </Button>
+        )}
       </div>
 
       {/* KPI Display */}

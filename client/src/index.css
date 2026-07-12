@@ -135,3 +135,23 @@ body {
   background-color: var(--accent);
 }
 
+:root.light {
+  --bg-primary: #F3F4F6;
+  --bg-sidebar: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F9FAFB;
+  --bg-input: #FFFFFF;
+  --border-default: #E5E7EB;
+  --border-focus: #3B82F6;
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
+  --text-muted: #9CA3AF;
+  --accent: #2563EB;
+  --accent-hover: #1D4ED8;
+  --status-available: #10B981;
+  --status-ontrip: #3B82F6;
+  --status-shop: #F59E0B;
+  --status-retired: #EF4444;
+  --status-draft: #9CA3AF;
+}
+

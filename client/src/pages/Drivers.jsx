@@ -5,6 +5,7 @@ import { ShieldAlert, Check, X, AlertTriangle, Trophy, LayoutList, Award, Clock 
 
 import { useDrivers, useAppActions } from '../context/AppContext';
 import { calculateSafetyRank, getLicenseExpiryTier } from '../utils/insights';
+import { usePermission } from '../hooks/usePermission';
 import KPICard from '../components/common/KPICard';
 import StatusBadge from '../components/common/StatusBadge';
 import DataTable from '../components/common/DataTable';
@@ -16,6 +17,7 @@ const CURRENT_DATE = new Date("2026-07-12");
 const Drivers = () => {
   const drivers = useDrivers();
   const { updateDriversStatusBulk } = useAppActions();
+  const { canEdit } = usePermission('drivers');
 
   // Selection states
   const [selectedDriverIds, setSelectedDriverIds] = useState([]);
@@ -262,9 +264,9 @@ const Drivers = () => {
 
             <DataTable columns={columns} data={drivers} emptyMessage="No drivers registered." />
 
-            {/* Action Bar */}
+            {/* Action Bar (hidden for view-only roles) */}
             <AnimatePresence>
-              {selectedDriverIds.length > 0 && (
+              {canEdit && selectedDriverIds.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
