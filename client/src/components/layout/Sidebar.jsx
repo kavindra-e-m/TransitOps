@@ -18,6 +18,13 @@ const NAV = [
   { to: '/analytics', label: 'Fleet Analytics', icon: BarChart2 },
 ];
 
+const ROLE_NAV_MAPPING = {
+  'Fleet Manager': ['/dashboard', '/map', '/fleet', '/drivers', '/trips', '/maintenance', '/fuel-expenses', '/analytics'],
+  'Dispatcher': ['/dashboard', '/map', '/fleet', '/drivers', '/trips'],
+  'Safety Officer': ['/dashboard', '/map', '/fleet', '/drivers', '/maintenance'],
+  'Financial Analyst': ['/dashboard', '/map', '/fleet', '/fuel-expenses', '/analytics']
+};
+
 const Sidebar = () => {
   const { pathname } = useLocation();
   const { user, role } = useAuth();
@@ -25,6 +32,11 @@ const Sidebar = () => {
   const initials = user?.name
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase()
     : 'JD';
+
+  const userNav = NAV.filter(item => {
+    const allowedPaths = ROLE_NAV_MAPPING[role] || ['/dashboard', '/map'];
+    return allowedPaths.includes(item.to);
+  });
 
   return (
     <aside className="fixed top-0 left-0 h-full w-[240px] bg-sidebar border-r border-outline-variant flex flex-col z-[60]">
@@ -43,7 +55,7 @@ const Sidebar = () => {
 
       {/* Nav Menu */}
       <nav className="flex-1 mt-4 px-3 space-y-1">
-        {NAV.map(({ to, label, icon: Icon }) => {
+        {userNav.map(({ to, label, icon: Icon }) => {
           const active = pathname === to;
           return (
             <NavLink 
