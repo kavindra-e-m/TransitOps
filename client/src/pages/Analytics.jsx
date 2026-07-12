@@ -131,7 +131,7 @@ const Analytics = () => {
           value={summary?.operationalCost ?? 0}
           icon={<Coins size={16} />}
           color="orange"
-          prefix="$"
+          prefix="₹"
           formula="Cost = Fuel + Maint + Expenses"
         />
         <AnalyticsKPICard
@@ -192,7 +192,7 @@ const Analytics = () => {
                 <div key={veh.vehicle_id || idx} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-semibold text-primary">{veh.reg_no}</span>
-                    <span className="font-mono text-secondary">${veh.totalCost.toLocaleString()}</span>
+                    <span className="font-mono text-secondary">₹{veh.totalCost.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="w-full bg-input rounded-full h-2 overflow-hidden border border-default/50">
                     <motion.div
@@ -285,7 +285,7 @@ const Analytics = () => {
 
                 <div className="shrink-0 text-left md:text-right space-y-0.5 select-none font-mono">
                   <span className="text-[9px] font-bold text-muted uppercase tracking-wider block">Charged Amount</span>
-                  <span className="text-sm font-bold text-[#ffb4ab]">${log.cost.toLocaleString()}</span>
+                  <span className="text-sm font-bold text-[#ffb4ab]">₹{log.cost.toLocaleString('en-IN')}</span>
                   <span className="text-[9px] text-muted block">{log.liters} liters refilled</span>
                 </div>
               </div>

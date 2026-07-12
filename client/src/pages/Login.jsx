@@ -364,7 +364,7 @@ const Login = () => {
                   animate={{ opacity: 1, y: 0, height: 'auto' }}
                   exit={{ opacity: 0, y: -6, height: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="text-sm rounded-xl px-4 py-3 mb-4"
+                  className="text-sm rounded-xl px-4 py-3 mb-4 font-medium"
                   style={{
                     color: '#ffb4ab',
                     background: 'rgba(239,68,68,0.08)',
@@ -380,7 +380,7 @@ const Login = () => {
                   animate={{ opacity: 1, y: 0, height: 'auto' }}
                   exit={{ opacity: 0, y: -6, height: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="text-sm rounded-xl px-4 py-3 mb-4"
+                  className="text-sm rounded-xl px-4 py-3 mb-4 font-medium"
                   style={{
                     color: '#51e77b',
                     background: 'rgba(34,197,94,0.08)',
@@ -416,7 +416,7 @@ const Login = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
                         required
-                        className="w-full px-3 py-2 pr-10 rounded-lg border transition-all duration-200 input-glow-focus"
+                        className="w-full px-3 py-2 pr-10 rounded-lg border transition-all duration-200 input-glow-focus text-sm"
                         style={{
                           background: 'rgba(11,14,20,0.7)',
                           color: '#e1e2eb',
@@ -458,12 +458,12 @@ const Login = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-sm select-none">
                     <label className="flex items-center gap-2 cursor-pointer select-none text-xs" style={{ color: 'rgba(160,142,122,0.8)' }}>
                       <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="accent-amber-400 w-3.5 h-3.5" />
                       Remember me
                     </label>
-                    <button type="button" className="text-xs transition-colors" style={{ color: '#ffc174' }}>Forgot password?</button>
+                    <button type="button" className="text-xs transition-colors hover:text-amber-300" style={{ color: '#ffc174' }}>Forgot password?</button>
                   </div>
 
                   <motion.button
@@ -512,7 +512,7 @@ const Login = () => {
                         onChange={(e) => setSignupPassword(e.target.value)}
                         placeholder="Min. 6 characters"
                         required
-                        className="w-full px-3 py-2 pr-10 rounded-lg border transition-all duration-200 input-glow-focus"
+                        className="w-full px-3 py-2 pr-10 rounded-lg border transition-all duration-200 input-glow-focus text-sm"
                         style={{
                           background: 'rgba(11,14,20,0.7)',
                           color: '#e1e2eb',
