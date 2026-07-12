@@ -1,37 +1,72 @@
 import React from 'react';
-import { Search } from 'lucide-react';
+import { Search, Bell, Moon, Sun, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-
-const ROLE_COLORS = {
-  'Fleet Manager': 'bg-[#3B82F6]/15 text-[#3B82F6] border-[#3B82F6]/30',
-  'Dispatcher': 'bg-[#22C55E]/15 text-[#22C55E] border-[#22C55E]/30',
-  'Safety Officer': 'bg-[#F97316]/15 text-[#F97316] border-[#F97316]/30',
-  'Financial Analyst': 'bg-[#F59E0B]/15 text-[#F59E0B] border-[#F59E0B]/30',
-};
 
 const Topbar = () => {
   const { user, role } = useAuth();
-  const initials = user?.name?.slice(0, 2).toUpperCase() || 'U';
 
   return (
-    <header className="fixed top-0 left-60 right-0 h-16 bg-sidebar border-b border-default flex items-center px-6 gap-4 z-20">
-      <div className="flex items-center gap-2 bg-input border border-default rounded-lg px-3 py-2 flex-1 max-w-xs">
-        <Search size={14} className="text-text-secondary shrink-0" />
-        <input
-          type="text"
-          placeholder="Search..."
-          className="bg-transparent text-sm text-text-primary placeholder:text-text-secondary outline-none w-full"
-        />
+    <header className="fixed top-0 right-0 h-16 w-[calc(100%-240px)] ml-[240px] bg-surface-container border-b border-outline-variant z-50 flex justify-between items-center px-6">
+      {/* Title & Search bar */}
+      <div className="flex items-center gap-6 flex-1">
+        <span className="text-base font-extrabold text-accent tracking-tight select-none">
+          TransitOps Central
+        </span>
+        <div className="relative w-full max-w-xs group">
+          <Search 
+            size={14} 
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" 
+          />
+          <input 
+            type="text" 
+            placeholder="Search fleet, routes, IDs..." 
+            className="w-full bg-surface-container-lowest border border-outline-variant focus:border-accent focus:ring-1 focus:ring-accent/20 rounded-md py-1.5 pl-10 pr-4 text-xs text-text-primary placeholder:text-text-secondary transition-all outline-none"
+          />
+        </div>
       </div>
-      <div className="ml-auto flex items-center gap-3">
-        {role && (
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${ROLE_COLORS[role] || 'bg-status-draft/15 text-status-draft border-status-draft/30'}`}>
-            {role}
-          </span>
-        )}
-        <span className="text-sm text-text-primary font-medium">{user?.name}</span>
-        <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-xs font-bold text-[#0B0E14]">
-          {initials}
+
+      {/* Profile & Notifications Actions */}
+      <div className="flex items-center gap-4">
+        {/* Alerts Bell */}
+        <button 
+          onClick={() => alert("No new notifications")}
+          className="p-2 text-text-secondary hover:text-accent transition-colors relative"
+        >
+          <Bell size={16} />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-status-retired rounded-full animate-ping"></span>
+        </button>
+
+        {/* Theme Toggler */}
+        <button 
+          onClick={() => alert("System dark mode active.")}
+          className="p-2 text-text-secondary hover:text-accent transition-colors"
+        >
+          <Moon size={16} />
+        </button>
+
+        <div className="h-6 w-px bg-outline-variant/30 mx-1"></div>
+
+        {/* Profile Card */}
+        <div className="flex items-center gap-3 cursor-pointer group select-none">
+          <div className="text-right leading-tight">
+            <p className="text-xs font-bold text-text-primary group-hover:text-accent transition-colors">
+              {user?.name || 'Dispatcher'}
+            </p>
+            <p className="text-[10px] text-text-secondary">
+              {role || 'North Sector'}
+            </p>
+          </div>
+          <div className="w-9 h-9 rounded-full border border-accent/40 overflow-hidden bg-card flex items-center justify-center">
+            <img 
+              className="w-full h-full object-cover" 
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqmUk-c3sntYnN9ND0-cgpDAjizNPW4vmI6u_oGY_EZaJ34b8Di7a__VpxQ6xobl5JJrfwOaPE6IHi102MynSnYnyUl9ggi1ecys88odSg3MQT2O2R-L-9pQHS9H3mkFvdZOfOHKqzNCCZshuWEEKNSGTHINsDbIGcdrq1kaCDmhCCU40hivklU4N5h8or_4WIS21VtS7Bm0adHqPHJzHUaBIcmjZHSYiIlbmGgjCu6XuO5d4yiK-6bOwf6xjxdVJP2ywnrvmz1RsM" 
+              alt="User profile"
+              onError={(e) => {
+                // Fallback if image fails to load
+                e.target.style.display = 'none';
+              }}
+            />
+          </div>
         </div>
       </div>
     </header>
