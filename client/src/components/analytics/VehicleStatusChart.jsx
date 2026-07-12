@@ -46,7 +46,7 @@ const VehicleStatusChart = () => {
                 dataKey="value"
                 animationDuration={800}
               >
-                {data.map((entry, idx) => (
+                {data.map((entry) => (
                   <Cell
                     key={entry.name}
                     fill={STATUS_COLORS[entry.name] || '#6B7280'}

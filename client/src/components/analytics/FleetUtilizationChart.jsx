@@ -3,7 +3,7 @@ import { RadialBarChart, RadialBar, ResponsiveContainer, PolarAngleAxis } from '
 import { Activity } from 'lucide-react';
 
 const FleetUtilizationChart = ({ utilization = 0 }) => {
-  const pct = parseFloat(utilization.toFixed(1));
+  const pct = parseFloat((utilization ?? 0).toFixed(1));
   const data = [{ value: pct }];
 
   const color = pct >= 70 ? '#22C55E' : pct >= 40 ? '#F59E0B' : '#EF4444';
