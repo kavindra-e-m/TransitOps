@@ -253,8 +253,8 @@ export function getPredictiveMaintenance(vehicle, maintenanceRecords) {
   const kmSince = vehicle.odometer;
 
   let status = 'ok';
-  if (kmSince > SERVICE_KM_THRESHOLD * 1.5) status = 'overdue';
-  else if (kmSince > SERVICE_KM_THRESHOLD) status = 'warning';
+  if (kmSince >= SERVICE_KM_THRESHOLD) status = 'overdue';
+  else if (kmSince >= SERVICE_KM_THRESHOLD - 500) status = 'warning';
 
   return { status, kmSince, lastServiceDate };
 }

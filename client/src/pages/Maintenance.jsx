@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { Plus, Wrench, AlertCircle, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Plus, Wrench, AlertCircle, CheckCircle2, ChevronRight, AlertTriangle, X } from 'lucide-react';
 
 import { useMaintenance, useVehicles, useAppActions } from '../context/AppContext';
+import { getPredictiveMaintenance } from '../utils/insights';
 import KPICard from '../components/common/KPICard';
 import StatusBadge from '../components/common/StatusBadge';
 import DataTable from '../components/common/DataTable';
@@ -19,6 +20,9 @@ const Maintenance = () => {
   // Selection states
   const [selectedLogId, setSelectedLogId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Tab State
+  const [activeTab, setActiveTab] = useState('logs'); // 'logs' | 'required'
 
   // Animation layout triggers
   const [transitionEffect, setTransitionEffect] = useState(null);
@@ -139,70 +143,185 @@ const Maintenance = () => {
         <KPICard label="Total Fleet Spendings" value={`$${totalCostMaintenance.toLocaleString()}`} color="red" />
       </div>
 
-      {/* Interactive SVG Diagram representing vehicle status transition */}
-      <div className="bg-card border border-default p-6 rounded-xl flex items-center justify-center flex-col md:flex-row gap-8 select-none shadow-sm relative overflow-hidden">
-        {/* Left State: Available */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-16 h-16 rounded-full bg-status-available/10 text-status-available border border-status-available/20 flex items-center justify-center shadow-lg shadow-status-available/5">
-            <CheckCircle2 size={32} />
-          </div>
-          <span className="text-xs font-semibold text-text-primary">Available</span>
-          <span className="text-[10px] text-text-secondary text-center max-w-[120px]">Ready for dispatch on active trips.</span>
-        </div>
-
-        {/* Transition Arrows & Logs animation */}
-        <div className="flex-1 flex flex-col items-center justify-center max-w-xs py-4">
-          <svg className="w-full h-12 text-border-default overflow-visible" fill="none">
-            <defs>
-              <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 2 L 8 5 L 0 8 z" fill="currentColor"/>
-              </marker>
-            </defs>
-            {/* Top Path: Dispatch to Maintenance (Active) */}
-            <path d="M 10,12 Q 130,-5 250,12" stroke="currentColor" strokeWidth="2" strokeDasharray="5 5" markerEnd="url(#arrow)" />
-            {/* Bottom Path: Release to Available (Completed) */}
-            <path d="M 250,32 Q 130,48 10,32" stroke="currentColor" strokeWidth="2" strokeDasharray="5 5" markerEnd="url(#arrow)" />
-
-            {/* Glowing moving dot indicators on transition action */}
-            {transitionEffect === 'to-shop' && (
-              <motion.circle r="4" fill="#F97316"
-                initial={{ offsetDistance: "0%" }}
-                animate={{ offsetDistance: "100%" }}
-                transition={{ duration: 0.8, ease: "easeInOut" }}
-                style={{ motionPath: "path('M 10,12 Q 130,-5 250,12')" }}
-              />
-            )}
-            {transitionEffect === 'to-available' && (
-              <motion.circle r="4" fill="#22C55E"
-                initial={{ offsetDistance: "0%" }}
-                animate={{ offsetDistance: "100%" }}
-                transition={{ duration: 0.8, ease: "easeInOut" }}
-                style={{ motionPath: "path('M 250,32 Q 130,48 10,32')" }}
-              />
-            )}
-          </svg>
-          <span className="text-[10px] text-text-muted mt-2 font-mono flex items-center gap-1">
-            Status Transition Telemetry
-          </span>
-        </div>
-
-        {/* Right State: In Shop */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-16 h-16 rounded-full bg-status-shop/10 text-status-shop border border-status-shop/20 flex items-center justify-center shadow-lg shadow-status-shop/5">
-            <AlertCircle size={32} />
-          </div>
-          <span className="text-xs font-semibold text-text-primary">In Shop</span>
-          <span className="text-[10px] text-text-secondary text-center max-w-[120px]">Undergoing routine repairs and maintenance.</span>
-        </div>
+      {/* Tab Selectors */}
+      <div className="flex items-center gap-2 select-none">
+        <button
+          onClick={() => setActiveTab('logs')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all duration-200 ${
+            activeTab === 'logs'
+              ? 'bg-accent text-[#0B0E14] border-accent shadow-md shadow-accent/20'
+              : 'bg-card border-default text-text-secondary hover:text-text-primary hover:border-accent/40'
+          }`}
+        >
+          <Wrench size={14} />
+          Service Logs
+        </button>
+        <button
+          onClick={() => setActiveTab('required')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all duration-200 relative ${
+            activeTab === 'required'
+              ? 'bg-accent text-[#0B0E14] border-accent shadow-md shadow-accent/20'
+              : 'bg-card border-default text-text-secondary hover:text-text-primary hover:border-accent/40'
+          }`}
+        >
+          <AlertTriangle size={14} />
+          Service Required
+          {vehicles.filter(v => getPredictiveMaintenance(v, logs).status !== 'ok').length > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-retired opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-status-retired"></span>
+            </span>
+          )}
+        </button>
       </div>
 
-      {/* Data Table */}
-      <DataTable
-        columns={columns}
-        data={logs}
-        onRowClick={(row) => setSelectedLogId(row.id)}
-        emptyMessage="No maintenance entries scheduled."
-      />
+      <AnimatePresence mode="wait">
+        {activeTab === 'logs' && (
+          <motion.div
+            key="logs-view"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-6"
+          >
+            {/* Interactive SVG Diagram representing vehicle status transition */}
+            <div className="bg-card border border-default p-6 rounded-xl flex items-center justify-center flex-col md:flex-row gap-8 select-none shadow-sm relative overflow-hidden">
+              {/* Left State: Available */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-16 h-16 rounded-full bg-status-available/10 text-status-available border border-status-available/20 flex items-center justify-center shadow-lg shadow-status-available/5">
+                  <CheckCircle2 size={32} />
+                </div>
+                <span className="text-xs font-semibold text-text-primary">Available</span>
+                <span className="text-[10px] text-text-secondary text-center max-w-[120px]">Ready for dispatch on active trips.</span>
+              </div>
+
+              {/* Transition Arrows & Logs animation */}
+              <div className="flex-1 flex flex-col items-center justify-center max-w-xs py-4">
+                <svg className="w-full h-12 text-border-default overflow-visible" fill="none">
+                  <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                      <path d="M 0 2 L 8 5 L 0 8 z" fill="currentColor"/>
+                    </marker>
+                  </defs>
+                  {/* Top Path: Dispatch to Maintenance (Active) */}
+                  <path d="M 10,12 Q 130,-5 250,12" stroke="currentColor" strokeWidth="2" strokeDasharray="5 5" markerEnd="url(#arrow)" />
+                  {/* Bottom Path: Release to Available (Completed) */}
+                  <path d="M 250,32 Q 130,48 10,32" stroke="currentColor" strokeWidth="2" strokeDasharray="5 5" markerEnd="url(#arrow)" />
+
+                  {/* Glowing moving dot indicators on transition action */}
+                  {transitionEffect === 'to-shop' && (
+                    <motion.circle r="4" fill="#F97316"
+                      initial={{ offsetDistance: "0%" }}
+                      animate={{ offsetDistance: "100%" }}
+                      transition={{ duration: 0.8, ease: "easeInOut" }}
+                      style={{ motionPath: "path('M 10,12 Q 130,-5 250,12')" }}
+                    />
+                  )}
+                  {transitionEffect === 'to-available' && (
+                    <motion.circle r="4" fill="#22C55E"
+                      initial={{ offsetDistance: "0%" }}
+                      animate={{ offsetDistance: "100%" }}
+                      transition={{ duration: 0.8, ease: "easeInOut" }}
+                      style={{ motionPath: "path('M 250,32 Q 130,48 10,32')" }}
+                    />
+                  )}
+                </svg>
+                <span className="text-[10px] text-text-muted mt-2 font-mono flex items-center gap-1">
+                  Status Transition Telemetry
+                </span>
+              </div>
+
+              {/* Right State: In Shop */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-16 h-16 rounded-full bg-status-shop/10 text-status-shop border border-status-shop/20 flex items-center justify-center shadow-lg shadow-status-shop/5">
+                  <AlertCircle size={32} />
+                </div>
+                <span className="text-xs font-semibold text-text-primary">In Shop</span>
+                <span className="text-[10px] text-text-secondary text-center max-w-[120px]">Undergoing routine repairs and maintenance.</span>
+              </div>
+            </div>
+
+            {/* Data Table */}
+            <DataTable
+              columns={columns}
+              data={logs}
+              onRowClick={(row) => setSelectedLogId(row.id)}
+              emptyMessage="No maintenance entries scheduled."
+            />
+          </motion.div>
+        )}
+
+        {activeTab === 'required' && (
+          <motion.div
+            key="required-view"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
+            {vehicles.filter(v => getPredictiveMaintenance(v, logs).status !== 'ok').map((v) => {
+              const { status, kmSince, lastServiceDate } = getPredictiveMaintenance(v, logs);
+              const percent = Math.min(Math.round((kmSince / 5000) * 100), 100);
+              
+              return (
+                <div key={v.id} className="bg-card border border-default rounded-xl p-5 flex flex-col justify-between hover:border-accent/40 transition-all select-none">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="text-sm font-bold text-text-primary">{v.regNumber}</h4>
+                        <p className="text-xs text-text-secondary">{v.name}</p>
+                      </div>
+                      {status === 'overdue' ? (
+                        <span className="bg-status-retired/10 border border-status-retired/25 text-status-retired px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider animate-pulse">
+                          Overdue ({kmSince.toLocaleString()} km)
+                        </span>
+                      ) : (
+                        <span className="bg-yellow-400/10 border border-yellow-400/25 text-yellow-400 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider">
+                          Due Soon ({kmSince.toLocaleString()} km)
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] font-mono font-medium">
+                        <span className="text-text-muted">Threshold Progress</span>
+                        <span className={`${status === 'overdue' ? 'text-status-retired' : 'text-yellow-400'}`}>{percent}%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-[#0B0E14] rounded-full overflow-hidden border border-default/50">
+                        <div
+                          className={`h-full rounded-full ${status === 'overdue' ? 'bg-status-retired' : 'bg-yellow-400'}`}
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                      <p className="text-[9px] text-text-muted">
+                        {lastServiceDate ? `Last service date: ${lastServiceDate}` : "No service logs found."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={() => {
+                      setFormValues((prev) => ({ ...prev, vehicleId: String(v.id) }));
+                      setIsModalOpen(true);
+                    }}
+                    className="w-full mt-4 !py-1.5 !text-xs"
+                  >
+                    Schedule Service
+                  </Button>
+                </div>
+              );
+            })}
+            {vehicles.filter(v => getPredictiveMaintenance(v, logs).status !== 'ok').length === 0 && (
+              <div className="col-span-full text-center py-12 text-sm text-text-muted bg-card border border-default rounded-xl">
+                All vehicles are below the service requirement threshold.
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Log Maintenance Modal */}
       <Modal

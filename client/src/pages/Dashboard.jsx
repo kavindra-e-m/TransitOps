@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useVehicles, useDrivers, useTrips, useIsLive } from '../context/AppContext';
+import { useVehicles, useDrivers, useTrips, useIsLive, useMaintenance } from '../context/AppContext';
 import StatusBadge from '../components/common/StatusBadge';
-import { getLicenseAlertDrivers } from '../utils/insights';
+import { getLicenseAlertDrivers, getMaintenanceAlertVehicles } from '../utils/insights';
 import { 
   TrendingUp, TrendingDown, CheckCircle, Leaf, AlertTriangle, 
-  MapPin, Clock, ShieldCheck, Zap, ChevronRight, Play, CheckSquare, XCircle, ShieldAlert
+  MapPin, Clock, ShieldCheck, Zap, ChevronRight, Play, CheckSquare, XCircle, ShieldAlert, Wrench
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -14,6 +14,7 @@ const Dashboard = () => {
   const allVehicles = useVehicles();
   const allDrivers = useDrivers();
   const allTrips = useTrips();
+  const allMaintenance = useMaintenance();
   const isLive = useIsLive();
 
   // Compute live statistics from the backend database
@@ -259,6 +260,65 @@ const Dashboard = () => {
               {getLicenseAlertDrivers(allDrivers).length === 0 && (
                 <div className="text-center py-6 text-xs text-text-muted select-none">
                   All credentials up to date.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Vehicles Pending Service Card */}
+          <div className="bg-card border border-outline-variant rounded-xl flex flex-col p-4 space-y-3">
+            <div className="flex justify-between items-center select-none">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-text-primary flex items-center gap-2">
+                <Wrench size={14} className="text-status-shop" />
+                Vehicles Pending Service
+              </h3>
+              {getMaintenanceAlertVehicles(allVehicles, allMaintenance).length > 0 && (
+                <span className="bg-status-shop/15 border border-status-shop/30 text-status-shop px-2 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase">
+                  {getMaintenanceAlertVehicles(allVehicles, allMaintenance).length} Warning
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-3 max-h-[160px] overflow-y-auto pr-1">
+              {getMainMaintenanceAlertVehicles(allVehicles, allMaintenance).map((v) => {
+                const percent = Math.min(Math.round((v.maintenanceFlag.kmSince / 5000) * 100), 100);
+                const isOverdue = v.maintenanceFlag.status === 'overdue';
+                return (
+                  <div
+                    key={v.id}
+                    onClick={() => navigate('/maintenance')}
+                    className="p-2.5 rounded border border-default/40 hover:border-accent bg-[#0B0E14]/45 hover:bg-[#0B0E14]/75 transition-all cursor-pointer space-y-2 group select-none"
+                  >
+                    <div className="flex justify-between items-center min-w-0">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-text-primary group-hover:text-accent truncate">{v.regNumber}</p>
+                        <p className="text-[9px] text-text-muted mt-0.5 truncate">{v.name}</p>
+                      </div>
+                      <span className={`text-[8px] px-1.5 py-0.5 rounded border font-black uppercase tracking-wider ${
+                        isOverdue ? 'bg-status-retired/10 border-status-retired/20 text-status-retired animate-pulse' : 'bg-yellow-400/10 border-yellow-400/20 text-yellow-400'
+                      }`}>
+                        {isOverdue ? 'Overdue' : 'Due Soon'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[8px] font-mono font-bold text-text-secondary">
+                        <span>{v.maintenanceFlag.kmSince.toLocaleString()} / 5,000 km</span>
+                        <span>{percent}%</span>
+                      </div>
+                      <div className="h-1 w-full bg-[#0B0E14] rounded-full overflow-hidden border border-default/30">
+                        <div
+                          className={`h-full rounded-full ${isOverdue ? 'bg-status-retired' : 'bg-yellow-400'}`}
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {getMaintenanceAlertVehicles(allVehicles, allMaintenance).length === 0 && (
+                <div className="text-center py-6 text-xs text-text-muted select-none">
+                  All mileage levels optimal.
                 </div>
               )}
             </div>
