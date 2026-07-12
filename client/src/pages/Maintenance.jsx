@@ -388,7 +388,7 @@ const Maintenance = () => {
             />
           </div>
 
-          {/* Status dropdown */}
+          {/* Status dropdown — maps to DB: Active→In Progress (In Shop), Closed→Completed (Available) */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold uppercase tracking-wider text-secondary select-none">
               Initial Status
@@ -399,8 +399,8 @@ const Maintenance = () => {
               onChange={handleInputChange}
               className="w-full px-3 py-2 bg-input text-[#E5E7EB] text-sm rounded-lg border border-default focus:outline-none focus:border-focus transition-all duration-200"
             >
-              <option value="Active">Active (In Shop)</option>
-              <option value="Closed">Closed (Released)</option>
+              <option value="Active">In Progress — Vehicle goes In Shop</option>
+              <option value="Closed">Completed — Vehicle released to Available</option>
             </select>
           </div>
 
