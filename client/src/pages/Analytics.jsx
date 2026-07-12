@@ -9,6 +9,9 @@ import { Download, TrendingUp, Coins, Activity, Percent, ShieldOff } from 'lucid
 
 import { getAnalyticsSummaryAPI, getMonthlyRevenueAPI, getTopCostliestVehiclesAPI } from '../api/analytics';
 import AnalyticsKPICard from '../components/analytics/AnalyticsKPICard';
+import VehicleStatusChart from '../components/analytics/VehicleStatusChart';
+import FleetUtilizationChart from '../components/analytics/FleetUtilizationChart';
+import FuelCostChart from '../components/analytics/FuelCostChart';
 
 const Analytics = () => {
   const [summary, setSummary] = useState(null);
@@ -234,6 +237,14 @@ const Analytics = () => {
         </div>
 
       </div>
+
+      {/* Second Charts Row: Vehicle Status | Fleet Utilization | Fuel Cost */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <VehicleStatusChart />
+        <FleetUtilizationChart utilization={summary?.fleetUtilization ?? 0} />
+        <FuelCostChart />
+      </div>
+
     </div>
   );
 };
