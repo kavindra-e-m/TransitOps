@@ -1,0 +1,1 @@
+const express = require('express'); const router = express.Router(); router.post('/signup', (req, res) => res.json({ id: 1, name: req.body.name, email: req.body.email, role: 'Fleet Manager' })); router.post('/login', (req, res) => res.json({ token: 'mock-jwt-token', user: { id: 1, role: 'Fleet Manager' } })); module.exports = router;

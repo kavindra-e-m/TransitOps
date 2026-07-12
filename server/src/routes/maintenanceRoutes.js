@@ -1,0 +1,1 @@
+const express = require('express'); const router = express.Router(); router.get('/', (req, res) => res.json([{ id: 1, vehicle_id: 1, service_type: 'Oil Change', cost: 80, date: '2026-06-15', status: 'Completed' }])); router.post('/', (req, res) => res.status(201).json({ id: 2, ...req.body, status: 'In Progress' })); module.exports = router;

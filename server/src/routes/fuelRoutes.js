@@ -1,0 +1,1 @@
+const express = require('express'); const router = express.Router(); router.get('/', (req, res) => res.json([{ id: 1, vehicle_id: 1, liters: 50, cost: 75, date: '2026-07-01', odometer_at_fill: 11000 }])); router.post('/', (req, res) => res.status(201).json({ id: 2, ...req.body })); module.exports = router;
