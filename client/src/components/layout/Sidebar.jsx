@@ -1,9 +1,9 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Truck, Users, Route, Wrench,
-  Fuel, BarChart2, Settings, HelpCircle, AlertOctagon, Map, Lock
+  Fuel, BarChart2, Settings, HelpCircle, AlertOctagon, Map, Lock, LogOut
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPermission } from '../../config/permissions';
@@ -21,11 +21,17 @@ const NAV = [
 
 const Sidebar = () => {
   const { pathname } = useLocation();
-  const { user, role } = useAuth();
+  const { user, role, logout } = useAuth();
+  const navigate = useNavigate();
   
   const initials = user?.name
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase()
     : 'JD';
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   // Filter out nav items where the role has 'none' permission
   const visibleNav = NAV.filter(item => {
@@ -113,14 +119,23 @@ const Sidebar = () => {
           Support
         </div>
 
-        {/* User Signature Details */}
-        <div className="mt-4 flex items-center gap-3 px-7 pt-3 border-t border-outline-variant/30 select-none">
-          <div className="w-8 h-8 rounded-full bg-card border border-accent/20 flex items-center justify-center text-accent text-xs font-bold font-mono">
-            {initials}
-          </div>
-          <div className="flex flex-col leading-tight">
-            <span className="text-xs font-bold text-primary">{user?.name || 'Dispatcher'}</span>
-            <span className="text-[10px] text-secondary font-medium">{role || 'Operations'}</span>
+        {/* User Signature + Logout */}
+        <div className="mt-4 border-t border-outline-variant/30 pt-3">
+          <div className="flex items-center gap-3 px-4 select-none">
+            <div className="w-8 h-8 rounded-full bg-card border border-accent/20 flex items-center justify-center text-accent text-xs font-bold font-mono shrink-0">
+              {initials}
+            </div>
+            <div className="flex flex-col leading-tight flex-1 min-w-0">
+              <span className="text-xs font-bold text-primary truncate">{user?.name || 'Dispatcher'}</span>
+              <span className="text-[10px] text-secondary font-medium truncate">{role || 'Operations'}</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Log out"
+              className="ml-auto shrink-0 w-7 h-7 rounded-md flex items-center justify-center text-muted hover:text-status-retired hover:bg-status-retired/10 transition-colors"
+            >
+              <LogOut size={14} />
+            </button>
           </div>
         </div>
       </div>
