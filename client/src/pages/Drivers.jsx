@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { ShieldAlert, Check, X, AlertTriangle, Trophy, LayoutList, Award, Clock } from 'lucide-react';
+import { ShieldAlert, Check, X, AlertTriangle, Trophy, LayoutList, Award, Clock, Plus } from 'lucide-react';
 
 import { useDrivers, useAppActions } from '../context/AppContext';
 import { calculateSafetyRank, getLicenseExpiryTier } from '../utils/insights';
@@ -10,17 +10,33 @@ import KPICard from '../components/common/KPICard';
 import StatusBadge from '../components/common/StatusBadge';
 import DataTable from '../components/common/DataTable';
 import Button from '../components/common/Button';
+import Modal from '../components/common/Modal';
+import Input from '../components/common/Input';
 
 // Mock system date for licensing rules
 const CURRENT_DATE = new Date("2026-07-12");
 
+const EMPTY_DRIVER_FORM = {
+  name: '',
+  licenseNumber: '',
+  licenseCategory: 'B',
+  licenseExpiryDate: '',
+  contactNumber: ''
+};
+
 const Drivers = () => {
   const drivers = useDrivers();
-  const { updateDriversStatusBulk } = useAppActions();
+  const { updateDriversStatusBulk, createDriver } = useAppActions();
   const { canEdit } = usePermission('drivers');
 
   // Selection states
   const [selectedDriverIds, setSelectedDriverIds] = useState([]);
+
+  // Register Driver modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formValues, setFormValues] = useState(EMPTY_DRIVER_FORM);
+  const [formErrors, setFormErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   // Feature 2: view mode toggle
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'leaderboard'
@@ -44,6 +60,46 @@ const Drivers = () => {
     } else {
       setSelectedDriverIds(drivers.map((d) => d.id));
     }
+  };
+
+  // Register Driver handlers
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFormValues(prev => ({ ...prev, [name]: value }));
+    setFormErrors(prev => ({ ...prev, [name]: '' }));
+  };
+
+  const validateDriverForm = () => {
+    const errors = {};
+    if (!formValues.name.trim()) errors.name = 'Full name is required';
+    if (!formValues.licenseNumber.trim()) errors.licenseNumber = 'License number is required';
+    if (!formValues.licenseCategory) errors.licenseCategory = 'License category is required';
+    if (!formValues.licenseExpiryDate) errors.licenseExpiryDate = 'Expiry date is required';
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleDriverSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateDriverForm()) return;
+    setSubmitting(true);
+    try {
+      await createDriver(formValues);
+      toast.success(`Driver ${formValues.name} registered successfully!`);
+      setFormValues(EMPTY_DRIVER_FORM);
+      setFormErrors({});
+      setIsModalOpen(false);
+    } catch {
+      // Interceptor handles toast
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setFormValues(EMPTY_DRIVER_FORM);
+    setFormErrors({});
   };
 
   // Bulk status update action
@@ -199,9 +255,17 @@ const Drivers = () => {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h2 className="text-xl font-bold text-primary">Drivers & Safety</h2>
-        <p className="text-xs text-secondary">Manage credentials, monitor driver safety metrics, and update active statuses.</p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-primary">Drivers & Safety</h2>
+          <p className="text-xs text-secondary">Manage credentials, monitor driver safety metrics, and update active statuses.</p>
+        </div>
+        {canEdit && (
+          <Button onClick={() => setIsModalOpen(true)}>
+            <Plus size={16} />
+            Register Driver
+          </Button>
+        )}
       </div>
 
       {/* KPI Stats */}
@@ -419,6 +483,77 @@ const Drivers = () => {
         )}
 
       </AnimatePresence>
+
+      {/* Register Driver Modal */}
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title="Register New Driver">
+        <form onSubmit={handleDriverSubmit} className="space-y-4 font-sans">
+          <Input
+            label="Full Name"
+            name="name"
+            value={formValues.name}
+            onChange={handleFormChange}
+            error={formErrors.name}
+            placeholder="e.g. Alex Johnson"
+          />
+
+          <Input
+            label="License Number (Unique)"
+            name="licenseNumber"
+            value={formValues.licenseNumber}
+            onChange={handleFormChange}
+            error={formErrors.licenseNumber}
+            placeholder="e.g. DL-2024-00123"
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-secondary select-none">
+                License Category
+              </label>
+              <select
+                name="licenseCategory"
+                value={formValues.licenseCategory}
+                onChange={handleFormChange}
+                className="w-full px-3 py-2 bg-input text-primary text-sm rounded-lg border border-default focus:outline-none focus:border-focus transition-all duration-200"
+              >
+                <option value="A">Class A — Heavy Vehicles</option>
+                <option value="B">Class B — Medium Vehicles</option>
+                <option value="C">Class C — Light Vehicles</option>
+                <option value="D">Class D — Passenger</option>
+              </select>
+              {formErrors.licenseCategory && (
+                <p className="text-[10px] text-status-retired font-medium">{formErrors.licenseCategory}</p>
+              )}
+            </div>
+
+            <Input
+              label="License Expiry Date"
+              name="licenseExpiryDate"
+              value={formValues.licenseExpiryDate}
+              onChange={handleFormChange}
+              error={formErrors.licenseExpiryDate}
+              type="date"
+            />
+          </div>
+
+          <Input
+            label="Contact Number (Optional)"
+            name="contactNumber"
+            value={formValues.contactNumber}
+            onChange={handleFormChange}
+            placeholder="e.g. +1-555-0100"
+          />
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-default select-none">
+            <Button variant="secondary" onClick={handleCloseModal} type="button">
+              Cancel
+            </Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Registering...' : 'Register Driver'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

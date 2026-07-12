@@ -64,7 +64,10 @@ export const AppProvider = ({ children }) => {
     serviceType: m.service_type,
     cost: m.cost,
     date: m.date,
-    status: m.status === 'Completed' ? 'Closed' : 'Active'
+    // Map DB values (Scheduled | In Progress | Completed) to UI values (Active | Closed)
+    // Active = vehicle is In Shop; Closed = vehicle released back to Available
+    status: m.status === 'Completed' ? 'Closed' : 'Active',
+    rawStatus: m.status  // preserve original DB value for debugging
   }));
 
   // Fetch all data
