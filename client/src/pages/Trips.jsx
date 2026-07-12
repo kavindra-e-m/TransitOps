@@ -184,9 +184,9 @@ const Trips = () => {
       label: "Route Detail",
       render: (row) => (
         <div className="flex items-center gap-1.5 text-xs">
-          <span className="font-semibold text-text-primary">{row.source}</span>
-          <ChevronRight size={12} className="text-text-muted shrink-0" />
-          <span className="font-semibold text-text-primary">{row.destination}</span>
+          <span className="font-semibold text-primary">{row.source}</span>
+          <ChevronRight size={12} className="text-muted shrink-0" />
+          <span className="font-semibold text-primary">{row.destination}</span>
         </div>
       )
     },
@@ -237,8 +237,8 @@ const Trips = () => {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="text-xl font-bold text-text-primary">Dispatches & Routes</h2>
-          <p className="text-xs text-text-secondary">Dispatch logistics routes and manage trip execution stages.</p>
+          <h2 className="text-xl font-bold text-primary">Dispatches & Routes</h2>
+          <p className="text-xs text-secondary">Dispatch logistics routes and manage trip execution stages.</p>
         </div>
         <Button onClick={() => setIsModalOpen(true)}>
           <Plus size={16} />
@@ -283,13 +283,13 @@ const Trips = () => {
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200 ${
                     active ? 'bg-accent text-[#0B0E14]' : 
                     completed ? 'bg-status-available/20 text-status-available border border-status-available/30' : 
-                    'bg-input border border-default text-text-muted'
+                    'bg-input border border-default text-muted'
                   }`}>
                     {step}
                   </div>
                   <div className="hidden sm:block">
-                    <p className={`text-[10px] font-bold uppercase tracking-wider ${active ? 'text-text-primary' : 'text-text-muted'}`}>{title}</p>
-                    <p className="text-[9px] text-text-muted/65 mt-0.5">{desc}</p>
+                    <p className={`text-[10px] font-bold uppercase tracking-wider ${active ? 'text-primary' : 'text-muted'}`}>{title}</p>
+                    <p className="text-[9px] text-muted/65 mt-0.5">{desc}</p>
                   </div>
                 </div>
               );
@@ -358,7 +358,7 @@ const Trips = () => {
                 {/* Recommended Vehicles Section */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center select-none">
-                    <label className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+                    <label className="text-xs font-bold uppercase tracking-wider text-secondary">
                       Select Vehicle (Smart Recommendation)
                     </label>
                     <button
@@ -389,10 +389,10 @@ const Trips = () => {
                           >
                             <div className="min-w-0 flex-1 pr-4">
                               <div className="flex items-center gap-2">
-                                <span className="font-semibold text-xs text-text-primary">{v.regNumber}</span>
-                                <span className="text-[10px] text-text-secondary truncate">— {v.name}</span>
+                                <span className="font-semibold text-xs text-primary">{v.regNumber}</span>
+                                <span className="text-[10px] text-secondary truncate">— {v.name}</span>
                               </div>
-                              <p className="text-[9px] text-text-muted mt-1 leading-relaxed">
+                              <p className="text-[9px] text-muted mt-1 leading-relaxed">
                                 Cap: {v.maxLoadCapacity.toLocaleString()} kg · Odometer: {v.odometer.toLocaleString()} km
                               </p>
                               <p className="text-[8px] text-accent/80 font-medium mt-0.5 truncate italic">
@@ -408,7 +408,7 @@ const Trips = () => {
                         );
                       })}
                       {recommendedVehicles.length === 0 && (
-                        <div className="text-center py-4 bg-card border border-default rounded-lg text-xs text-text-muted select-none">
+                        <div className="text-center py-4 bg-card border border-default rounded-lg text-xs text-muted select-none">
                           No suitable available vehicles found for this weight load.
                         </div>
                       )}
@@ -418,7 +418,7 @@ const Trips = () => {
                       name="vehicleId"
                       value={formValues.vehicleId}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 bg-input text-text-primary text-sm rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
+                      className="w-full px-3 py-2 bg-input text-primary text-sm rounded-lg border border-default focus:outline-none focus:border-focus transition-all duration-200"
                     >
                       <option value="">-- Select Available Vehicle --</option>
                       {availableVehicles.map(v => (
@@ -434,7 +434,7 @@ const Trips = () => {
                 {/* Recommended Drivers Section */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center select-none">
-                    <label className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+                    <label className="text-xs font-bold uppercase tracking-wider text-secondary">
                       Assign Operator (Smart Recommendation)
                     </label>
                     <button
@@ -465,10 +465,10 @@ const Trips = () => {
                           >
                             <div className="min-w-0 flex-1 pr-4">
                               <div className="flex items-center gap-2">
-                                <span className="font-semibold text-xs text-text-primary">{d.name}</span>
-                                <span className="text-[10px] text-text-secondary font-mono">({d.licenseCategory})</span>
+                                <span className="font-semibold text-xs text-primary">{d.name}</span>
+                                <span className="text-[10px] text-secondary font-mono">({d.licenseCategory})</span>
                               </div>
-                              <p className="text-[9px] text-text-muted mt-1 leading-relaxed">
+                              <p className="text-[9px] text-muted mt-1 leading-relaxed">
                                 Safety Score: {d.safetyScore}% · Completion: {d.tripCompletionPct}%
                               </p>
                               <p className="text-[8px] text-accent/80 font-medium mt-0.5 truncate italic">
@@ -484,7 +484,7 @@ const Trips = () => {
                         );
                       })}
                       {recommendedDrivers.length === 0 && (
-                        <div className="text-center py-4 bg-card border border-default rounded-lg text-xs text-text-muted select-none">
+                        <div className="text-center py-4 bg-card border border-default rounded-lg text-xs text-muted select-none">
                           No available drivers found.
                         </div>
                       )}
@@ -494,7 +494,7 @@ const Trips = () => {
                       name="driverId"
                       value={formValues.driverId}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 bg-input text-[#E5E7EB] text-sm rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
+                      className="w-full px-3 py-2 bg-input text-[#E5E7EB] text-sm rounded-lg border border-default focus:outline-none focus:border-focus transition-all duration-200"
                     >
                       <option value="">-- Assign Available Operator --</option>
                       {availableDrivers.map(d => (
@@ -557,17 +557,17 @@ const Trips = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="relative z-10 w-full max-w-lg h-full bg-sidebar border-l border-default p-6 shadow-2xl flex flex-col overflow-hidden text-text-primary"
+              className="relative z-10 w-full max-w-lg h-full bg-sidebar border-l border-default p-6 shadow-2xl flex flex-col overflow-hidden text-primary"
             >
               {/* Drawer Header */}
               <div className="flex items-center justify-between border-b border-default pb-4 mb-5">
                 <div>
                   <h3 className="text-lg font-bold">Dispatch Detail</h3>
-                  <span className="font-mono text-xs text-text-secondary select-all">{selectedTripObj.id}</span>
+                  <span className="font-mono text-xs text-secondary select-all">{selectedTripObj.id}</span>
                 </div>
                 <button
                   onClick={() => setSelectedTripId(null)}
-                  className="text-text-muted hover:text-text-primary rounded-md p-1 transition-colors"
+                  className="text-muted hover:text-primary rounded-md p-1 transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -578,7 +578,7 @@ const Trips = () => {
                 {/* Route Diagram card */}
                 <div className="bg-card border border-default p-4 rounded-xl space-y-3">
                   <div className="flex justify-between items-center select-none">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Route Path</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Route Path</span>
                     <StatusBadge status={selectedTripObj.status} />
                   </div>
                   <div className="flex items-center gap-3">
@@ -589,11 +589,11 @@ const Trips = () => {
                     </div>
                     <div className="flex flex-col gap-3 font-semibold text-xs">
                       <div>
-                        <span className="text-text-secondary font-medium mr-1.5">Origin:</span>
+                        <span className="text-secondary font-medium mr-1.5">Origin:</span>
                         <span>{selectedTripObj.source}</span>
                       </div>
                       <div>
-                        <span className="text-text-secondary font-medium mr-1.5">Destination:</span>
+                        <span className="text-secondary font-medium mr-1.5">Destination:</span>
                         <span>{selectedTripObj.destination}</span>
                       </div>
                     </div>
@@ -602,7 +602,7 @@ const Trips = () => {
 
                 {/* Feature 1: Trip Timeline */}
                 <div className="bg-card border border-default p-4 rounded-xl">
-                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-text-muted mb-4 flex items-center gap-1.5">
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted mb-4 flex items-center gap-1.5">
                     <GitBranch size={13} className="text-accent" />
                     Dispatch Lifecycle
                   </h4>
@@ -614,44 +614,44 @@ const Trips = () => {
                   {/* Distance & Load */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-card p-3 rounded-lg border border-default">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block">Cargo weight</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-muted block">Cargo weight</span>
                       <span className="font-mono font-bold mt-1 block text-sm">{selectedTripObj.cargoWeight.toLocaleString()} kg</span>
                     </div>
                     <div className="bg-card p-3 rounded-lg border border-default">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block">Planned Distance</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-muted block">Planned Distance</span>
                       <span className="font-mono font-bold mt-1 block text-sm">{selectedTripObj.plannedDistance} km</span>
                     </div>
                   </div>
 
                   {/* Assigned Vehicle details */}
                   <div className="bg-card p-4 rounded-xl border border-default space-y-2">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block">Vehicle details</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-muted block">Vehicle details</span>
                     {detailVehicleObj ? (
                       <div className="flex items-center gap-3 text-xs">
                         <Truck size={20} className="text-accent shrink-0" />
                         <div>
-                          <div className="font-semibold text-text-primary">{detailVehicleObj.name}</div>
-                          <div className="font-mono text-[10px] text-text-secondary mt-0.5">{detailVehicleObj.regNumber}</div>
+                          <div className="font-semibold text-primary">{detailVehicleObj.name}</div>
+                          <div className="font-mono text-[10px] text-secondary mt-0.5">{detailVehicleObj.regNumber}</div>
                         </div>
                       </div>
                     ) : (
-                      <span className="text-xs text-text-muted italic">No vehicle mapping found.</span>
+                      <span className="text-xs text-muted italic">No vehicle mapping found.</span>
                     )}
                   </div>
 
                   {/* Assigned Operator details */}
                   <div className="bg-card p-4 rounded-xl border border-default space-y-2">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block">Driver details</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-muted block">Driver details</span>
                     {detailDriverObj ? (
                       <div className="flex items-center gap-3 text-xs">
                         <User size={20} className="text-accent shrink-0" />
                         <div>
-                          <div className="font-semibold text-text-primary">{detailDriverObj.name}</div>
-                          <div className="text-[10px] text-text-secondary mt-0.5">License: {detailDriverObj.licenseNumber} (Cat {detailDriverObj.licenseCategory})</div>
+                          <div className="font-semibold text-primary">{detailDriverObj.name}</div>
+                          <div className="text-[10px] text-secondary mt-0.5">License: {detailDriverObj.licenseNumber} (Cat {detailDriverObj.licenseCategory})</div>
                         </div>
                       </div>
                     ) : (
-                      <span className="text-xs text-text-muted italic">No driver mapping found.</span>
+                      <span className="text-xs text-muted italic">No driver mapping found.</span>
                     )}
                   </div>
                 </div>

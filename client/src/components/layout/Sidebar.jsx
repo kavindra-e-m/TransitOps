@@ -36,7 +36,7 @@ const Sidebar = () => {
         />
         <div className="flex flex-col select-none">
           <span className="text-lg font-bold text-accent tracking-tight leading-none">TransitOps</span>
-          <span className="text-[9px] uppercase tracking-widest text-text-secondary font-extrabold mt-0.5">Command Center</span>
+          <span className="text-[9px] uppercase tracking-widest text-secondary font-extrabold mt-0.5">Command Center</span>
         </div>
       </div>
 
@@ -63,7 +63,7 @@ const Sidebar = () => {
               )}
               <Icon 
                 size={16} 
-                className={active ? 'text-accent' : 'text-text-secondary group-hover:text-text-primary transition-colors'} 
+                className={active ? 'text-accent' : 'text-secondary group-hover:text-primary transition-colors'} 
               />
               <span className="font-medium capitalize">{label}</span>
             </NavLink>
@@ -86,14 +86,14 @@ const Sidebar = () => {
       <div className="border-t border-outline-variant/30 py-3 space-y-1">
         <NavLink 
           to="/settings" 
-          className="flex items-center gap-3 px-7 py-2.5 text-xs text-text-secondary hover:text-text-primary transition-colors uppercase font-semibold"
+          className="flex items-center gap-3 px-7 py-2.5 text-xs text-secondary hover:text-primary transition-colors uppercase font-semibold"
         >
           <Settings size={15} />
           Settings
         </NavLink>
         <div 
           onClick={() => alert("Contact support at support@transitops.com")} 
-          className="flex items-center gap-3 px-7 py-2.5 text-xs text-text-secondary hover:text-text-primary transition-colors cursor-pointer uppercase font-semibold"
+          className="flex items-center gap-3 px-7 py-2.5 text-xs text-secondary hover:text-primary transition-colors cursor-pointer uppercase font-semibold"
         >
           <HelpCircle size={15} />
           Support
@@ -105,8 +105,8 @@ const Sidebar = () => {
             {initials}
           </div>
           <div className="flex flex-col leading-tight">
-            <span className="text-xs font-bold text-text-primary">{user?.name || 'Dispatcher'}</span>
-            <span className="text-[10px] text-text-secondary font-medium">{role || 'Operations'}</span>
+            <span className="text-xs font-bold text-primary">{user?.name || 'Dispatcher'}</span>
+            <span className="text-[10px] text-secondary font-medium">{role || 'Operations'}</span>
           </div>
         </div>
       </div>

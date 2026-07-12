@@ -26,15 +26,15 @@ const Modal = ({ isOpen, onClose, title, children }) => {
             className="relative z-10 w-full max-w-lg overflow-hidden rounded-xl border border-default bg-card p-6 shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-default pb-4 mb-4 select-none">
-              <h3 className="text-base font-semibold text-text-primary">{title}</h3>
+              <h3 className="text-base font-semibold text-primary">{title}</h3>
               <button
                 onClick={onClose}
-                className="text-text-muted hover:text-text-primary rounded-md p-1 transition-colors focus:outline-none"
+                className="text-muted hover:text-primary rounded-md p-1 transition-colors focus:outline-none"
               >
                 <X size={18} />
               </button>
             </div>
-            <div className="text-sm text-text-secondary">
+            <div className="text-sm text-secondary">
               {children}
             </div>
           </motion.div>

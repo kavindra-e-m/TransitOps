@@ -23,13 +23,13 @@ const VehicleStatusChart = () => {
 
   return (
     <div className="bg-card p-6 rounded-xl border border-default space-y-4 select-none">
-      <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary border-b border-default pb-3 flex items-center gap-2">
+      <h3 className="text-sm font-bold uppercase tracking-wider text-primary border-b border-default pb-3 flex items-center gap-2">
         <Truck size={16} className="text-accent" />
         Vehicle Status
       </h3>
 
       {data.length === 0 ? (
-        <div className="flex h-48 items-center justify-center text-sm text-text-muted">
+        <div className="flex h-48 items-center justify-center text-sm text-muted">
           No vehicle data available.
         </div>
       ) : (

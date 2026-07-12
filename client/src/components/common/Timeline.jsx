@@ -39,8 +39,8 @@ const TripTimeline = ({ trip }) => {
             lineDashed: true,
           },
           future: {
-            icon: <Circle size={16} className="text-text-muted shrink-0" />,
-            labelClass: 'text-text-muted',
+            icon: <Circle size={16} className="text-muted shrink-0" />,
+            labelClass: 'text-muted',
             lineClass: 'bg-border-default',
             lineDashed: true,
           },

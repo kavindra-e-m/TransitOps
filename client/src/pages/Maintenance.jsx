@@ -105,8 +105,8 @@ const Maintenance = () => {
         const vehicle = vehicles.find(v => v.id === Number(row.vehicleId));
         return (
           <div className="flex flex-col">
-            <span className="font-semibold text-text-primary">{vehicle ? vehicle.regNumber : row.vehicleId}</span>
-            <span className="text-[10px] text-text-secondary mt-0.5">{vehicle ? vehicle.name : ''}</span>
+            <span className="font-semibold text-primary">{vehicle ? vehicle.regNumber : row.vehicleId}</span>
+            <span className="text-[10px] text-secondary mt-0.5">{vehicle ? vehicle.name : ''}</span>
           </div>
         );
       } 
@@ -127,8 +127,8 @@ const Maintenance = () => {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="text-xl font-bold text-text-primary">Maintenance Scheduling</h2>
-          <p className="text-xs text-text-secondary">Log vehicle servicing events, schedule repairs, and release vehicles to service.</p>
+          <h2 className="text-xl font-bold text-primary">Maintenance Scheduling</h2>
+          <p className="text-xs text-secondary">Log vehicle servicing events, schedule repairs, and release vehicles to service.</p>
         </div>
         <Button onClick={() => setIsModalOpen(true)}>
           <Plus size={16} />
@@ -150,7 +150,7 @@ const Maintenance = () => {
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all duration-200 ${
             activeTab === 'logs'
               ? 'bg-accent text-[#0B0E14] border-accent shadow-md shadow-accent/20'
-              : 'bg-card border-default text-text-secondary hover:text-text-primary hover:border-accent/40'
+              : 'bg-card border-default text-secondary hover:text-primary hover:border-accent/40'
           }`}
         >
           <Wrench size={14} />
@@ -161,7 +161,7 @@ const Maintenance = () => {
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all duration-200 relative ${
             activeTab === 'required'
               ? 'bg-accent text-[#0B0E14] border-accent shadow-md shadow-accent/20'
-              : 'bg-card border-default text-text-secondary hover:text-text-primary hover:border-accent/40'
+              : 'bg-card border-default text-secondary hover:text-primary hover:border-accent/40'
           }`}
         >
           <AlertTriangle size={14} />
@@ -192,8 +192,8 @@ const Maintenance = () => {
                 <div className="w-16 h-16 rounded-full bg-status-available/10 text-status-available border border-status-available/20 flex items-center justify-center shadow-lg shadow-status-available/5">
                   <CheckCircle2 size={32} />
                 </div>
-                <span className="text-xs font-semibold text-text-primary">Available</span>
-                <span className="text-[10px] text-text-secondary text-center max-w-[120px]">Ready for dispatch on active trips.</span>
+                <span className="text-xs font-semibold text-primary">Available</span>
+                <span className="text-[10px] text-secondary text-center max-w-[120px]">Ready for dispatch on active trips.</span>
               </div>
 
               {/* Transition Arrows & Logs animation */}
@@ -227,7 +227,7 @@ const Maintenance = () => {
                     />
                   )}
                 </svg>
-                <span className="text-[10px] text-text-muted mt-2 font-mono flex items-center gap-1">
+                <span className="text-[10px] text-muted mt-2 font-mono flex items-center gap-1">
                   Status Transition Telemetry
                 </span>
               </div>
@@ -237,8 +237,8 @@ const Maintenance = () => {
                 <div className="w-16 h-16 rounded-full bg-status-shop/10 text-status-shop border border-status-shop/20 flex items-center justify-center shadow-lg shadow-status-shop/5">
                   <AlertCircle size={32} />
                 </div>
-                <span className="text-xs font-semibold text-text-primary">In Shop</span>
-                <span className="text-[10px] text-text-secondary text-center max-w-[120px]">Undergoing routine repairs and maintenance.</span>
+                <span className="text-xs font-semibold text-primary">In Shop</span>
+                <span className="text-[10px] text-secondary text-center max-w-[120px]">Undergoing routine repairs and maintenance.</span>
               </div>
             </div>
 
@@ -270,8 +270,8 @@ const Maintenance = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="text-sm font-bold text-text-primary">{v.regNumber}</h4>
-                        <p className="text-xs text-text-secondary">{v.name}</p>
+                        <h4 className="text-sm font-bold text-primary">{v.regNumber}</h4>
+                        <p className="text-xs text-secondary">{v.name}</p>
                       </div>
                       {status === 'overdue' ? (
                         <span className="bg-status-retired/10 border border-status-retired/25 text-status-retired px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider animate-pulse">
@@ -287,7 +287,7 @@ const Maintenance = () => {
                     {/* Progress bar */}
                     <div className="space-y-1">
                       <div className="flex justify-between text-[10px] font-mono font-medium">
-                        <span className="text-text-muted">Threshold Progress</span>
+                        <span className="text-muted">Threshold Progress</span>
                         <span className={`${status === 'overdue' ? 'text-status-retired' : 'text-yellow-400'}`}>{percent}%</span>
                       </div>
                       <div className="h-1.5 w-full bg-[#0B0E14] rounded-full overflow-hidden border border-default/50">
@@ -296,7 +296,7 @@ const Maintenance = () => {
                           style={{ width: `${percent}%` }}
                         />
                       </div>
-                      <p className="text-[9px] text-text-muted">
+                      <p className="text-[9px] text-muted">
                         {lastServiceDate ? `Last service date: ${lastServiceDate}` : "No service logs found."}
                       </p>
                     </div>
@@ -315,7 +315,7 @@ const Maintenance = () => {
               );
             })}
             {vehicles.filter(v => getPredictiveMaintenance(v, logs).status !== 'ok').length === 0 && (
-              <div className="col-span-full text-center py-12 text-sm text-text-muted bg-card border border-default rounded-xl">
+              <div className="col-span-full text-center py-12 text-sm text-muted bg-card border border-default rounded-xl">
                 All vehicles are below the service requirement threshold.
               </div>
             )}
@@ -336,14 +336,14 @@ const Maintenance = () => {
           
           {/* Vehicle Dropdown */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary select-none">
+            <label className="text-xs font-semibold uppercase tracking-wider text-secondary select-none">
               Vehicle for Service
             </label>
             <select
               name="vehicleId"
               value={formValues.vehicleId}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 bg-input text-[#E5E7EB] text-sm rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
+              className="w-full px-3 py-2 bg-input text-[#E5E7EB] text-sm rounded-lg border border-default focus:outline-none focus:border-focus transition-all duration-200"
             >
               <option value="">-- Select Fleet Vehicle --</option>
               {vehicles.map(v => (
@@ -386,14 +386,14 @@ const Maintenance = () => {
 
           {/* Status dropdown */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary select-none">
+            <label className="text-xs font-semibold uppercase tracking-wider text-secondary select-none">
               Initial Status
             </label>
             <select
               name="status"
               value={formValues.status}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 bg-input text-[#E5E7EB] text-sm rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
+              className="w-full px-3 py-2 bg-input text-[#E5E7EB] text-sm rounded-lg border border-default focus:outline-none focus:border-focus transition-all duration-200"
             >
               <option value="Active">Active (In Shop)</option>
               <option value="Closed">Closed (Released)</option>
@@ -427,17 +427,17 @@ const Maintenance = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="relative z-10 w-full max-w-md h-full bg-sidebar border-l border-default p-6 shadow-2xl flex flex-col overflow-hidden text-text-primary"
+              className="relative z-10 w-full max-w-md h-full bg-sidebar border-l border-default p-6 shadow-2xl flex flex-col overflow-hidden text-primary"
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-default pb-4 mb-5">
                 <div>
                   <h3 className="text-lg font-bold">Service Log Detail</h3>
-                  <span className="font-mono text-xs text-text-secondary select-all">Log #{selectedLogObj.id}</span>
+                  <span className="font-mono text-xs text-secondary select-all">Log #{selectedLogObj.id}</span>
                 </div>
                 <button
                   onClick={() => setSelectedLogId(null)}
-                  className="text-text-muted hover:text-text-primary rounded-md p-1 transition-colors"
+                  className="text-muted hover:text-primary rounded-md p-1 transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -448,26 +448,26 @@ const Maintenance = () => {
                 
                 {/* Status card */}
                 <div className="bg-card border border-default p-4 rounded-xl flex justify-between items-center select-none">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Status</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Status</span>
                   <StatusBadge status={selectedLogObj.status} />
                 </div>
 
                 <div className="space-y-4">
                   {/* Service Description */}
                   <div className="bg-card p-3.5 rounded-lg border border-default">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted">Service type</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-muted">Service type</span>
                     <span className="font-bold mt-1.5 block text-xs">{selectedLogObj.serviceType}</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     {/* Cost */}
                     <div className="bg-card p-3.5 rounded-lg border border-default">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted">Cost</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-muted">Cost</span>
                       <span className="font-mono font-bold mt-1 block text-sm">${selectedLogObj.cost.toLocaleString()}</span>
                     </div>
                     {/* Date */}
                     <div className="bg-card p-3.5 rounded-lg border border-default">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted">Service Date</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-muted">Service Date</span>
                       <span className="font-mono font-bold mt-1 block text-sm">{selectedLogObj.date}</span>
                     </div>
                   </div>

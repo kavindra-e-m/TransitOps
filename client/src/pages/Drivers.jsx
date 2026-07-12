@@ -198,8 +198,8 @@ const Drivers = () => {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h2 className="text-xl font-bold text-text-primary">Drivers & Safety</h2>
-        <p className="text-xs text-text-secondary">Manage credentials, monitor driver safety metrics, and update active statuses.</p>
+        <h2 className="text-xl font-bold text-primary">Drivers & Safety</h2>
+        <p className="text-xs text-secondary">Manage credentials, monitor driver safety metrics, and update active statuses.</p>
       </div>
 
       {/* KPI Stats */}
@@ -217,7 +217,7 @@ const Drivers = () => {
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all duration-200 ${
             viewMode === 'table'
               ? 'bg-accent text-[#0B0E14] border-accent shadow-md shadow-accent/20'
-              : 'bg-card border-default text-text-secondary hover:text-text-primary hover:border-accent/40'
+              : 'bg-card border-default text-secondary hover:text-primary hover:border-accent/40'
           }`}
         >
           <LayoutList size={14} />
@@ -228,7 +228,7 @@ const Drivers = () => {
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all duration-200 ${
             viewMode === 'leaderboard'
               ? 'bg-accent text-[#0B0E14] border-accent shadow-md shadow-accent/20'
-              : 'bg-card border-default text-text-secondary hover:text-text-primary hover:border-accent/40'
+              : 'bg-card border-default text-secondary hover:text-primary hover:border-accent/40'
           }`}
         >
           <Trophy size={14} />
@@ -249,7 +249,7 @@ const Drivers = () => {
             className="space-y-3"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-text-muted select-none">
+              <span className="text-xs font-semibold text-muted select-none">
                 {selectedDriverIds.length} driver(s) selected
               </span>
               <button
@@ -272,8 +272,8 @@ const Drivers = () => {
                   className="p-5 rounded-xl border border-default bg-card shadow-2xl flex items-center justify-between flex-wrap gap-4 select-none"
                 >
                   <div className="space-y-1">
-                    <h4 className="text-sm font-semibold text-text-primary">Bulk Operations</h4>
-                    <p className="text-xs text-text-secondary">
+                    <h4 className="text-sm font-semibold text-primary">Bulk Operations</h4>
+                    <p className="text-xs text-secondary">
                       Set status for the {selectedDriverIds.length} selected operator(s).
                     </p>
                   </div>
@@ -300,7 +300,7 @@ const Drivers = () => {
                     </div>
 
                     <Button variant="secondary" onClick={() => handleBulkStatusUpdate("Off Duty")} className="!px-3 !py-1.5 !text-xs border-default">
-                      <X size={14} className="text-text-muted" />
+                      <X size={14} className="text-muted" />
                       Off Duty
                     </Button>
 
@@ -329,18 +329,18 @@ const Drivers = () => {
             <div className="px-5 py-4 border-b border-default flex items-center justify-between bg-card select-none">
               <div className="flex items-center gap-2">
                 <Trophy size={16} className="text-accent" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-primary">
                   Driver Safety Score Ranking
                 </h3>
               </div>
-              <span className="text-[10px] text-text-muted font-medium">
+              <span className="text-[10px] text-muted font-medium">
                 {drivers.length} operators · sorted by safety score
               </span>
             </div>
 
             {/* Ranked Rows */}
             {rankedDrivers.length === 0 ? (
-              <div className="text-center py-12 text-sm text-text-muted">No drivers registered.</div>
+              <div className="text-center py-12 text-sm text-muted">No drivers registered.</div>
             ) : (
               <motion.ul
                 variants={containerVariants}
@@ -364,7 +364,7 @@ const Drivers = () => {
                             {medal.icon}
                           </div>
                         ) : (
-                          <span className="font-mono text-sm font-bold text-text-muted">#{driver.rank}</span>
+                          <span className="font-mono text-sm font-bold text-muted">#{driver.rank}</span>
                         )}
                       </div>
 
@@ -376,14 +376,14 @@ const Drivers = () => {
                       {/* Name + ID */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-semibold text-text-primary truncate">{driver.name}</span>
+                          <span className="text-sm font-semibold text-primary truncate">{driver.name}</span>
                           {medal && (
                             <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ${medal.bg} ${medal.color}`}>
                               {medal.label}
                             </span>
                           )}
                         </div>
-                        <span className="text-[10px] text-text-muted font-mono">ID: DRV-{String(driver.id).padStart(3, '0')} · {driver.licenseCategory}</span>
+                        <span className="text-[10px] text-muted font-mono">ID: DRV-{String(driver.id).padStart(3, '0')} · {driver.licenseCategory}</span>
                       </div>
 
                       {/* Score Bar */}

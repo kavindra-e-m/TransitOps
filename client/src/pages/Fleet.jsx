@@ -186,8 +186,8 @@ const Fleet = () => {
       {/* Header and Actions */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="text-xl font-bold text-text-primary">Fleet Overview</h2>
-          <p className="text-xs text-text-secondary">Register, monitor, and audit your fleet inventory.</p>
+          <h2 className="text-xl font-bold text-primary">Fleet Overview</h2>
+          <p className="text-xs text-secondary">Register, monitor, and audit your fleet inventory.</p>
         </div>
         <Button onClick={() => setIsModalOpen(true)}>
           <Plus size={16} />
@@ -217,26 +217,26 @@ const Fleet = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 p-5 rounded-xl border border-default bg-card">
         {/* Search */}
         <div className="relative">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-text-muted mb-1 block">Search Fleet</label>
+          <label className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1 block">Search Fleet</label>
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-2.5 text-text-muted" />
+            <Search size={16} className="absolute left-3 top-2.5 text-muted" />
             <input
               type="text"
               placeholder="Search Reg No, model..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-1.5 bg-input border border-default text-sm text-text-primary rounded-lg focus:outline-none focus:border-border-focus transition-all"
+              className="w-full pl-9 pr-4 py-1.5 bg-input border border-default text-sm text-primary rounded-lg focus:outline-none focus:border-focus transition-all"
             />
           </div>
         </div>
 
         {/* Type Filter */}
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-wider text-text-muted mb-1 block">Vehicle Type</label>
+          <label className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1 block">Vehicle Type</label>
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="w-full px-3 py-1.5 bg-input border border-default text-sm text-text-primary rounded-lg focus:outline-none focus:border-border-focus"
+            className="w-full px-3 py-1.5 bg-input border border-default text-sm text-primary rounded-lg focus:outline-none focus:border-focus"
           >
             <option value="All">All Types</option>
             <option value="Heavy Truck">Heavy Truck</option>
@@ -247,11 +247,11 @@ const Fleet = () => {
 
         {/* Status Filter */}
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-wider text-text-muted mb-1 block">Status</label>
+          <label className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1 block">Status</label>
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="w-full px-3 py-1.5 bg-input border border-default text-sm text-text-primary rounded-lg focus:outline-none focus:border-border-focus"
+            className="w-full px-3 py-1.5 bg-input border border-default text-sm text-primary rounded-lg focus:outline-none focus:border-focus"
           >
             <option value="All">All Statuses</option>
             <option value="Available">Available</option>
@@ -321,14 +321,14 @@ const Fleet = () => {
           />
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary select-none">
+            <label className="text-xs font-semibold uppercase tracking-wider text-secondary select-none">
               Vehicle Type
             </label>
             <select
               name="type"
               value={formValues.type}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 bg-input text-text-primary rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
+              className="w-full px-3 py-2 bg-input text-primary rounded-lg border border-default focus:outline-none focus:border-focus transition-all duration-200"
             >
               <option value="Heavy Truck">Heavy Truck</option>
               <option value="Medium Truck">Medium Truck</option>
@@ -403,7 +403,7 @@ const Fleet = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="relative z-10 w-full max-w-xl h-full bg-sidebar border-l border-default p-6 shadow-2xl flex flex-col overflow-hidden text-text-primary"
+              className="relative z-10 w-full max-w-xl h-full bg-sidebar border-l border-default p-6 shadow-2xl flex flex-col overflow-hidden text-primary"
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-default pb-4 mb-5">
@@ -412,11 +412,11 @@ const Fleet = () => {
                     <h3 className="text-lg font-bold">{selectedVehicle.name}</h3>
                     <StatusBadge status={selectedVehicle.status} />
                   </div>
-                  <span className="font-mono text-sm text-text-secondary select-all">{selectedVehicle.regNumber}</span>
+                  <span className="font-mono text-sm text-secondary select-all">{selectedVehicle.regNumber}</span>
                 </div>
                 <button
                   onClick={() => setSelectedVehicle(null)}
-                  className="text-text-muted hover:text-text-primary rounded-md p-1 transition-colors"
+                  className="text-muted hover:text-primary rounded-md p-1 transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -434,7 +434,7 @@ const Fleet = () => {
                   return (
                     <div className="bg-[#0B0E14]/45 border border-default p-4.5 rounded-xl space-y-4 font-sans select-none">
                       <div className="flex justify-between items-center pb-2.5 border-b border-default/55">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-text-secondary">Digital Health Card</span>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-secondary">Digital Health Card</span>
                         <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${
                           healthInfo.healthPct >= 90 ? 'bg-status-available/10 border-status-available/25 text-status-available' :
                           healthInfo.healthPct >= 70 ? 'bg-yellow-400/10 border-yellow-400/25 text-yellow-400' :
@@ -461,27 +461,27 @@ const Fleet = () => {
                             />
                           </svg>
                           <div className="absolute flex flex-col items-center justify-center">
-                            <span className="font-mono text-xs font-black text-text-primary">{healthInfo.healthPct}%</span>
-                            <span className="text-[7px] text-text-muted font-bold uppercase tracking-widest">Health</span>
+                            <span className="font-mono text-xs font-black text-primary">{healthInfo.healthPct}%</span>
+                            <span className="text-[7px] text-muted font-bold uppercase tracking-widest">Health</span>
                           </div>
                         </div>
 
                         {/* Financial / Operating Efficiency Metrics */}
                         <div className="flex-1 grid grid-cols-2 gap-3.5">
                           <div className="space-y-0.5">
-                            <span className="text-[8px] font-bold text-text-muted uppercase tracking-wider block">Est. Revenue</span>
+                            <span className="text-[8px] font-bold text-muted uppercase tracking-wider block">Est. Revenue</span>
                             <span className="font-mono text-xs font-bold text-[#51e77b]">
                               +${(healthInfo.lifetimeCost + healthInfo.profit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           </div>
                           <div className="space-y-0.5">
-                            <span className="text-[8px] font-bold text-text-muted uppercase tracking-wider block">Fuel & Service Cost</span>
+                            <span className="text-[8px] font-bold text-muted uppercase tracking-wider block">Fuel & Service Cost</span>
                             <span className="font-mono text-xs font-bold text-[#ffb4ab]">
                               -${healthInfo.lifetimeCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           </div>
                           <div className="space-y-0.5 col-span-2 pt-1.5 border-t border-default/35 flex justify-between items-center">
-                            <span className="text-[8px] font-bold text-text-muted uppercase tracking-wider">Net Operating Profit</span>
+                            <span className="text-[8px] font-bold text-muted uppercase tracking-wider">Net Operating Profit</span>
                             <span className={`font-mono text-xs font-black ${healthInfo.profit >= 0 ? 'text-[#51e77b]' : 'text-status-retired'}`}>
                               {healthInfo.profit >= 0 ? '+' : ''}${healthInfo.profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
@@ -495,22 +495,22 @@ const Fleet = () => {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-3 gap-3 bg-card border border-default p-4 rounded-xl">
                   <div className="text-center">
-                    <p className="text-[10px] text-text-muted uppercase font-bold tracking-wider">Odometer</p>
+                    <p className="text-[10px] text-muted uppercase font-bold tracking-wider">Odometer</p>
                     <p className="font-mono text-sm font-semibold mt-1">{selectedVehicle.odometer.toLocaleString()} km</p>
                   </div>
                   <div className="text-center border-x border-default">
-                    <p className="text-[10px] text-text-muted uppercase font-bold tracking-wider">Max Capacity</p>
+                    <p className="text-[10px] text-muted uppercase font-bold tracking-wider">Max Capacity</p>
                     <p className="font-mono text-sm font-semibold mt-1">{selectedVehicle.maxLoadCapacity.toLocaleString()} kg</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-[10px] text-text-muted uppercase font-bold tracking-wider">Acq. Cost</p>
+                    <p className="text-[10px] text-muted uppercase font-bold tracking-wider">Acq. Cost</p>
                     <p className="font-mono text-sm font-semibold mt-1">${selectedVehicle.acquisitionCost.toLocaleString()}</p>
                   </div>
                 </div>
 
                 {/* Trip History Sub-section */}
                 <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-3 flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-secondary mb-3 flex items-center gap-1.5">
                     <Compass size={14} className="text-accent" />
                     Trip History ({vehicleTrips.length})
                   </h4>
@@ -519,19 +519,19 @@ const Fleet = () => {
                       {vehicleTrips.map(trip => (
                         <div key={trip.id} className="bg-card p-3 rounded-lg border border-default text-xs flex justify-between items-center font-sans">
                           <div>
-                            <div className="font-medium flex items-center gap-2 text-text-primary">
+                            <div className="font-medium flex items-center gap-2 text-primary">
                               <span>{trip.source}</span>
-                              <span className="text-text-muted">→</span>
+                              <span className="text-muted">→</span>
                               <span>{trip.destination}</span>
                             </div>
-                            <span className="text-text-muted text-[10px] block mt-1">Cargo: {trip.cargoWeight} kg | Distance: {trip.plannedDistance} km</span>
+                            <span className="text-muted text-[10px] block mt-1">Cargo: {trip.cargoWeight} kg | Distance: {trip.plannedDistance} km</span>
                           </div>
                           <StatusBadge status={trip.status} />
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-6 border border-dashed border-default rounded-lg text-text-muted text-xs">
+                    <div className="text-center py-6 border border-dashed border-default rounded-lg text-muted text-xs">
                       No trip logs found for this vehicle.
                     </div>
                   )}
@@ -539,7 +539,7 @@ const Fleet = () => {
 
                 {/* Maintenance Log Sub-section */}
                 <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-3 flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-secondary mb-3 flex items-center gap-1.5">
                     <Wrench size={14} className="text-accent" />
                     Maintenance History ({vehicleMaintenance.length})
                   </h4>
@@ -548,8 +548,8 @@ const Fleet = () => {
                       {vehicleMaintenance.map(record => (
                         <div key={record.id} className="bg-card p-3 rounded-lg border border-default text-xs flex justify-between items-center font-sans">
                           <div>
-                            <div className="font-semibold text-text-primary">{record.serviceType}</div>
-                            <span className="text-text-muted text-[10px] mt-1 flex items-center gap-2">
+                            <div className="font-semibold text-primary">{record.serviceType}</div>
+                            <span className="text-muted text-[10px] mt-1 flex items-center gap-2">
                               <Calendar size={10} /> {record.date} | <DollarSign size={10} /> {record.cost.toLocaleString()}
                             </span>
                           </div>
@@ -558,7 +558,7 @@ const Fleet = () => {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-6 border border-dashed border-default rounded-lg text-text-muted text-xs">
+                    <div className="text-center py-6 border border-dashed border-default rounded-lg text-muted text-xs">
                       No maintenance records found for this vehicle.
                     </div>
                   )}

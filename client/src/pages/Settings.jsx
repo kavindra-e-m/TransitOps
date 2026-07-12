@@ -81,7 +81,7 @@ const Settings = () => {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center text-sm text-text-secondary select-none">
+      <div className="flex h-64 items-center justify-center text-sm text-secondary select-none">
         <div className="flex flex-col items-center gap-2">
           <span className="w-8 h-8 rounded-full border-2 border-accent border-t-transparent animate-spin" />
           <span>Loading system configuration...</span>
@@ -94,8 +94,8 @@ const Settings = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-text-primary">System Settings</h2>
-        <p className="text-xs text-text-secondary">Configure general depot parameters and audit Role-Based Access Control (RBAC) permissions.</p>
+        <h2 className="text-xl font-bold text-primary">System Settings</h2>
+        <p className="text-xs text-secondary">Configure general depot parameters and audit Role-Based Access Control (RBAC) permissions.</p>
       </div>
 
       {/* Top Row: User Profile + System Information */}
@@ -103,7 +103,7 @@ const Settings = () => {
 
         {/* User Profile Card */}
         <div className="bg-card rounded-xl border border-default p-6 space-y-4 select-none">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary border-b border-default pb-2.5 flex items-center gap-2">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-primary border-b border-default pb-2.5 flex items-center gap-2">
             <User size={16} className="text-accent" />
             User Profile
           </h3>
@@ -114,9 +114,9 @@ const Settings = () => {
               </span>
             </div>
             <div className="space-y-1 min-w-0">
-              <p className="text-sm font-semibold text-text-primary truncate">{user?.name ?? '—'}</p>
-              <p className="text-xs text-text-muted truncate">{user?.email ?? '—'}</p>
-              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${ROLE_COLOR[role] ?? 'text-text-muted bg-card border-default'}`}>
+              <p className="text-sm font-semibold text-primary truncate">{user?.name ?? '—'}</p>
+              <p className="text-xs text-muted truncate">{user?.email ?? '—'}</p>
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${ROLE_COLOR[role] ?? 'text-muted bg-card border-default'}`}>
                 {role ?? 'Unknown Role'}
               </span>
             </div>
@@ -125,7 +125,7 @@ const Settings = () => {
 
         {/* System Information Card */}
         <div className="bg-card rounded-xl border border-default p-6 space-y-4 select-none">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary border-b border-default pb-2.5 flex items-center gap-2">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-primary border-b border-default pb-2.5 flex items-center gap-2">
             <Info size={16} className="text-accent" />
             System Information
           </h3>
@@ -138,8 +138,8 @@ const Settings = () => {
               { label: 'Data Polling', value: 'Every 20 seconds' },
             ].map(({ label, value }) => (
               <div key={label} className="flex items-center justify-between gap-4">
-                <dt className="text-xs text-text-muted shrink-0">{label}</dt>
-                <dd className="text-xs font-semibold text-text-primary text-right truncate">{value}</dd>
+                <dt className="text-xs text-muted shrink-0">{label}</dt>
+                <dd className="text-xs font-semibold text-primary text-right truncate">{value}</dd>
               </div>
             ))}
           </dl>
@@ -150,7 +150,7 @@ const Settings = () => {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Left Column: General Settings (4/12 width) */}
         <form onSubmit={handleSaveSettings} className="xl:col-span-4 p-6 rounded-xl border border-default bg-card space-y-4 select-none">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary border-b border-default pb-2.5 mb-2 flex items-center gap-2">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-primary border-b border-default pb-2.5 mb-2 flex items-center gap-2">
             <SettingsIcon size={16} className="text-accent" />
             General Configurations
           </h3>
@@ -166,13 +166,13 @@ const Settings = () => {
           <div className="grid grid-cols-2 gap-4">
             {/* Currency Select */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+              <label className="text-xs font-semibold uppercase tracking-wider text-secondary">
                 Currency
               </label>
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="w-full px-3 py-2 bg-input text-text-primary text-sm rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
+                className="w-full px-3 py-2 bg-input text-primary text-sm rounded-lg border border-default focus:outline-none focus:border-focus transition-all duration-200"
               >
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
@@ -183,13 +183,13 @@ const Settings = () => {
 
             {/* Distance Unit Select */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+              <label className="text-xs font-semibold uppercase tracking-wider text-secondary">
                 Distance Unit
               </label>
               <select
                 value={distanceUnit}
                 onChange={(e) => setDistanceUnit(e.target.value)}
-                className="w-full px-3 py-2 bg-input text-text-primary text-sm rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
+                className="w-full px-3 py-2 bg-input text-primary text-sm rounded-lg border border-default focus:outline-none focus:border-focus transition-all duration-200"
               >
                 <option value="km">Kilometers (km)</option>
                 <option value="mi">Miles (mi)</option>
@@ -205,11 +205,11 @@ const Settings = () => {
         {/* Right Column: RBAC Matrix (8/12 width) */}
         <div className="xl:col-span-8 p-6 rounded-xl border border-default bg-card space-y-4">
           <div className="flex items-center justify-between border-b border-default pb-2.5 mb-2 select-none">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary flex items-center gap-2">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
               <Shield size={16} className="text-accent" />
               Role Permissions Matrix
             </h3>
-            <span className="text-[10px] text-text-muted font-bold flex items-center gap-1">
+            <span className="text-[10px] text-muted font-bold flex items-center gap-1">
               <Lock size={10} />
               Read-Only Configurations
             </span>
@@ -219,7 +219,7 @@ const Settings = () => {
           <div className="w-full overflow-x-auto rounded-lg border border-default">
             <table className="w-full text-left border-collapse text-xs select-none">
               <thead>
-                <tr className="bg-bg-primary/40 border-b border-default text-[10px] font-bold text-text-secondary uppercase tracking-wider">
+                <tr className="bg-primary/40 border-b border-default text-[10px] font-bold text-secondary uppercase tracking-wider">
                   <th className="p-3 font-semibold w-[35%]">Capability</th>
                   {rolesList.map(role => (
                     <th key={role} className="p-3 text-center font-semibold">{role}</th>
@@ -230,8 +230,8 @@ const Settings = () => {
                 {capabilities.map((cap) => (
                   <tr key={cap.key} className="hover:bg-card-hover/40 transition-colors">
                     <td className="p-3">
-                      <div className="font-semibold text-text-primary">{cap.label}</div>
-                      <div className="text-[10px] text-text-muted mt-0.5">{cap.desc}</div>
+                      <div className="font-semibold text-primary">{cap.label}</div>
+                      <div className="text-[10px] text-muted mt-0.5">{cap.desc}</div>
                     </td>
                     
                     {rolesList.map((role) => {
@@ -246,7 +246,7 @@ const Settings = () => {
                                 <Check size={11} strokeWidth={3} />
                               </div>
                             ) : (
-                              <div className="w-5 h-5 rounded-full bg-border-default/20 text-text-muted border border-default flex items-center justify-center">
+                              <div className="w-5 h-5 rounded-full bg-border-default/20 text-muted border border-default flex items-center justify-center">
                                 <Minus size={11} strokeWidth={2} />
                               </div>
                             )}

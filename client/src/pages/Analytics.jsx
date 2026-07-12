@@ -62,7 +62,7 @@ const Analytics = () => {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center text-sm text-text-secondary select-none">
+      <div className="flex h-64 items-center justify-center text-sm text-secondary select-none">
         <div className="flex flex-col items-center gap-2">
           <span className="w-8 h-8 rounded-full border-2 border-accent border-t-transparent animate-spin" />
           <span>Computing telemetry analytics metrics...</span>
@@ -76,8 +76,8 @@ const Analytics = () => {
       <div className="flex h-64 items-center justify-center select-none">
         <div className="flex flex-col items-center gap-3 text-center">
           <ShieldOff size={32} className="text-status-retired" />
-          <p className="text-sm font-semibold text-text-primary">Access Restricted</p>
-          <p className="text-xs text-text-muted max-w-xs">
+          <p className="text-sm font-semibold text-primary">Access Restricted</p>
+          <p className="text-xs text-muted max-w-xs">
             Analytics data is only available to Fleet Managers and Financial Analysts.
           </p>
         </div>
@@ -93,8 +93,8 @@ const Analytics = () => {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4 select-none">
         <div>
-          <h2 className="text-xl font-bold text-text-primary">Reports & Analytics</h2>
-          <p className="text-xs text-text-secondary">Analyze fleet financial metrics, ROI ratios, and operational efficiencies.</p>
+          <h2 className="text-xl font-bold text-primary">Reports & Analytics</h2>
+          <p className="text-xs text-secondary">Analyze fleet financial metrics, ROI ratios, and operational efficiencies.</p>
         </div>
         <ExportReportButton
           summary={summary}
@@ -145,7 +145,7 @@ const Analytics = () => {
         
         {/* Left Column: Monthly Revenue Chart (65%) */}
         <div className="lg:col-span-7 bg-card p-6 rounded-xl border border-default space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary border-b border-default pb-3 flex items-center gap-2">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-primary border-b border-default pb-3 flex items-center gap-2">
             <TrendingUp size={16} className="text-accent" />
             Monthly Revenue Trends
           </h3>
@@ -158,7 +158,7 @@ const Analytics = () => {
                 <YAxis stroke="#6B7280" fontSize={11} tickLine={false} />
                 <Tooltip 
                   contentStyle={{ background: '#131826', border: '1px solid #1F2937', borderRadius: '8px' }}
-                  labelClassName="text-xs font-semibold text-text-secondary"
+                  labelClassName="text-xs font-semibold text-secondary"
                   itemStyle={{ textTransform: 'capitalize', color: '#F59E0B', fontFamily: 'JetBrains Mono', fontSize: 12 }}
                 />
                 <Bar 
@@ -174,7 +174,7 @@ const Analytics = () => {
 
         {/* Right Column: Top Costliest Vehicles Chart (35%) */}
         <div className="lg:col-span-5 bg-card p-6 rounded-xl border border-default space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary border-b border-default pb-3 flex items-center gap-2">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-primary border-b border-default pb-3 flex items-center gap-2">
             <Coins size={16} className="text-status-shop" />
             Top Costliest Vehicles
           </h3>
@@ -187,8 +187,8 @@ const Analytics = () => {
               return (
                 <div key={veh.vehicle_id || idx} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-text-primary">{veh.reg_no}</span>
-                    <span className="font-mono text-text-secondary">${veh.totalCost.toLocaleString()}</span>
+                    <span className="font-semibold text-primary">{veh.reg_no}</span>
+                    <span className="font-mono text-secondary">${veh.totalCost.toLocaleString()}</span>
                   </div>
                   <div className="w-full bg-input rounded-full h-2 overflow-hidden border border-default/50">
                     <motion.div
@@ -203,7 +203,7 @@ const Analytics = () => {
             })}
             
             {costliestVehicles.length === 0 && (
-              <div className="text-center py-12 text-sm text-text-muted">
+              <div className="text-center py-12 text-sm text-muted">
                 No cost transaction logs recorded.
               </div>
             )}
@@ -222,7 +222,7 @@ const Analytics = () => {
       {/* Fuel Anomalies Report Section */}
       <div className="bg-card border border-default p-6 rounded-xl space-y-4 select-none">
         <div className="flex justify-between items-center border-b border-default pb-3">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary flex items-center gap-2">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
             <AlertTriangle size={16} className="text-status-shop" />
             Fuel Purchase Auditing & Anomalies
           </h3>
@@ -236,20 +236,20 @@ const Analytics = () => {
         {/* Audit Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-2">
           <div className="bg-[#0B0E14]/40 border border-default/60 p-3.5 rounded-lg flex flex-col justify-between">
-            <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider">Total Audited Refills</span>
-            <span className="font-mono text-base font-bold text-text-primary mt-1">
+            <span className="text-[9px] font-bold text-muted uppercase tracking-wider">Total Audited Refills</span>
+            <span className="font-mono text-base font-bold text-primary mt-1">
               {expenses.filter(e => e.type === 'fuel').length} refills
             </span>
           </div>
           <div className="bg-[#0B0E14]/40 border border-default/60 p-3.5 rounded-lg flex flex-col justify-between">
-            <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider">Anomalous Refuels</span>
+            <span className="text-[9px] font-bold text-muted uppercase tracking-wider">Anomalous Refuels</span>
             <span className="font-mono text-base font-bold text-status-shop mt-1">
               {fuelAnomalies.length} flagged
             </span>
           </div>
           <div className="bg-[#0B0E14]/40 border border-default/60 p-3.5 rounded-lg flex flex-col justify-between">
-            <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider">Refuel Anomaly Rate</span>
-            <span className="font-mono text-base font-bold text-text-primary mt-1">
+            <span className="text-[9px] font-bold text-muted uppercase tracking-wider">Refuel Anomaly Rate</span>
+            <span className="font-mono text-base font-bold text-primary mt-1">
               {expenses.filter(e => e.type === 'fuel').length > 0
                 ? `${Math.round((fuelAnomalies.length / expenses.filter(e => e.type === 'fuel').length) * 100)}%`
                 : '0%'}
@@ -265,9 +265,9 @@ const Analytics = () => {
               <div key={log.id} className="p-3.5 rounded-lg border border-status-shop/20 bg-status-shop/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold font-mono text-xs text-text-primary">{v ? v.regNumber : `Vehicle #${log.vehicleId}`}</span>
-                    <span className="text-[10px] text-text-secondary">— {v ? v.name : 'Unknown Model'}</span>
-                    <span className="text-[9px] text-text-muted font-mono ml-auto md:ml-0">{log.date}</span>
+                    <span className="font-bold font-mono text-xs text-primary">{v ? v.regNumber : `Vehicle #${log.vehicleId}`}</span>
+                    <span className="text-[10px] text-secondary">— {v ? v.name : 'Unknown Model'}</span>
+                    <span className="text-[9px] text-muted font-mono ml-auto md:ml-0">{log.date}</span>
                   </div>
                   <div className="space-y-1 pt-1.5 border-t border-default/20">
                     {log.anomaly.reasons.map((r, i) => (
@@ -280,15 +280,15 @@ const Analytics = () => {
                 </div>
 
                 <div className="shrink-0 text-left md:text-right space-y-0.5 select-none font-mono">
-                  <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider block">Charged Amount</span>
+                  <span className="text-[9px] font-bold text-muted uppercase tracking-wider block">Charged Amount</span>
                   <span className="text-sm font-bold text-[#ffb4ab]">${log.cost.toLocaleString()}</span>
-                  <span className="text-[9px] text-text-muted block">{log.liters} liters refilled</span>
+                  <span className="text-[9px] text-muted block">{log.liters} liters refilled</span>
                 </div>
               </div>
             );
           })}
           {fuelAnomalies.length === 0 && (
-            <div className="text-center py-10 text-xs text-text-muted border border-dashed border-default rounded-lg">
+            <div className="text-center py-10 text-xs text-muted border border-dashed border-default rounded-lg">
               No refuel anomalies flagged in the current dataset. All refuels comply with audit rules.
             </div>
           )}
