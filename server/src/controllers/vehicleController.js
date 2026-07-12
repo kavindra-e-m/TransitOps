@@ -18,6 +18,22 @@ exports.getAll = (req, res) => {
   res.json(vehicles);
 };
 
+exports.getLocations = (req, res) => {
+  const query = `
+    SELECT v.id, v.name, v.reg_no, v.status, v.capacity, v.latitude, v.longitude,
+           d.name as driver_name
+    FROM vehicles v
+    LEFT JOIN trips t ON t.vehicle_id = v.id AND t.status = 'Dispatched'
+    LEFT JOIN drivers d ON d.id = t.driver_id
+  `;
+  try {
+    const locations = db.prepare(query).all();
+    res.json(locations);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch locations.' });
+  }
+};
+
 exports.checkReg = (req, res) => {
   const { regNo } = req.params;
   const vehicle = db.prepare('SELECT id FROM vehicles WHERE reg_no = ?').get(regNo);

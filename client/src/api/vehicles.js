@@ -4,6 +4,10 @@ export const getVehiclesAPI = (params = {}) => {
   return client.get('/vehicles', { params }).then(res => res.data);
 };
 
+export const getVehicleLocationsAPI = () => {
+  return client.get('/vehicles/location').then(res => res.data);
+};
+
 export const checkRegUniqueAPI = (regNo) => {
   return client.get(`/vehicles/check/${regNo}`).then(res => res.data);
 };

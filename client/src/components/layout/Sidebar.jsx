@@ -3,11 +3,12 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Truck, Users, Route, Wrench,
-  Fuel, BarChart2, Settings
+  Fuel, BarChart2, Settings, Map
 } from 'lucide-react';
 
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/map', label: 'Fleet Map', icon: Map },
   { to: '/fleet', label: 'Fleet', icon: Truck },
   { to: '/drivers', label: 'Drivers', icon: Users },
   { to: '/trips', label: 'Trips', icon: Route },
