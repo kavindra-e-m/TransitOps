@@ -3,27 +3,21 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Truck, Users, Route, Wrench,
-  Fuel, BarChart2, Settings, HelpCircle, AlertOctagon, Map
+  Fuel, BarChart2, Settings, HelpCircle, AlertOctagon, Map, Lock
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { getPermission } from '../../config/permissions';
 
 const NAV = [
-  { to: '/dashboard', label: 'Fleet Overview', icon: LayoutDashboard },
-  { to: '/map', label: 'Fleet Map', icon: Map },
-  { to: '/fleet', label: 'Fleet Registry', icon: Truck },
-  { to: '/drivers', label: 'Drivers Registry', icon: Users },
-  { to: '/trips', label: 'Route Optimizer', icon: Route },
-  { to: '/maintenance', label: 'Maintenance Logs', icon: Wrench },
-  { to: '/fuel-expenses', label: 'Fuel & Expenses', icon: Fuel },
-  { to: '/analytics', label: 'Fleet Analytics', icon: BarChart2 },
+  { to: '/dashboard',    label: 'Fleet Overview',   icon: LayoutDashboard, module: 'dashboard'    },
+  { to: '/map',          label: 'Fleet Map',         icon: Map,             module: null           }, // always visible
+  { to: '/fleet',        label: 'Fleet Registry',    icon: Truck,           module: 'fleet'        },
+  { to: '/drivers',      label: 'Drivers Registry',  icon: Users,           module: 'drivers'      },
+  { to: '/trips',        label: 'Route Optimizer',   icon: Route,           module: 'trips'        },
+  { to: '/maintenance',  label: 'Maintenance Logs',  icon: Wrench,          module: 'maintenance'  },
+  { to: '/fuel-expenses',label: 'Fuel & Expenses',   icon: Fuel,            module: 'fuelExpenses' },
+  { to: '/analytics',    label: 'Fleet Analytics',   icon: BarChart2,       module: 'analytics'    },
 ];
-
-const ROLE_NAV_MAPPING = {
-  'Fleet Manager': ['/dashboard', '/map', '/fleet', '/drivers', '/trips', '/maintenance', '/fuel-expenses', '/analytics'],
-  'Dispatcher': ['/dashboard', '/map', '/fleet', '/drivers', '/trips'],
-  'Safety Officer': ['/dashboard', '/map', '/fleet', '/drivers', '/maintenance'],
-  'Financial Analyst': ['/dashboard', '/map', '/fleet', '/fuel-expenses', '/analytics']
-};
 
 const Sidebar = () => {
   const { pathname } = useLocation();
@@ -33,9 +27,10 @@ const Sidebar = () => {
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase()
     : 'JD';
 
-  const userNav = NAV.filter(item => {
-    const allowedPaths = ROLE_NAV_MAPPING[role] || ['/dashboard', '/map'];
-    return allowedPaths.includes(item.to);
+  // Filter out nav items where the role has 'none' permission
+  const visibleNav = NAV.filter(item => {
+    if (!item.module) return true; // null module = always visible (e.g. Map)
+    return getPermission(role, item.module) !== 'none';
   });
 
   return (
@@ -55,8 +50,10 @@ const Sidebar = () => {
 
       {/* Nav Menu */}
       <nav className="flex-1 mt-4 px-3 space-y-1">
-        {userNav.map(({ to, label, icon: Icon }) => {
+        {visibleNav.map(({ to, label, icon: Icon, module }) => {
           const active = pathname === to;
+          const permLevel = module ? getPermission(role, module) : 'edit';
+          const isViewOnly = permLevel === 'view';
           return (
             <NavLink 
               key={to} 
@@ -78,7 +75,11 @@ const Sidebar = () => {
                 size={16} 
                 className={active ? 'text-accent' : 'text-secondary group-hover:text-primary transition-colors'} 
               />
-              <span className="font-medium capitalize">{label}</span>
+              <span className="font-medium capitalize flex-1">{label}</span>
+              {/* Lock icon for view-only modules */}
+              {isViewOnly && (
+                <Lock size={10} className="text-muted/60 shrink-0" />
+              )}
             </NavLink>
           );
         })}

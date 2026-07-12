@@ -10,6 +10,7 @@ import { TrendingUp, Coins, Activity, Percent, ShieldOff, AlertTriangle } from '
 import { useExpenses, useVehicles, useTrips } from '../context/AppContext';
 import { detectFuelAnomalies } from '../utils/insights';
 import { getAnalyticsSummaryAPI, getMonthlyRevenueAPI, getTopCostliestVehiclesAPI } from '../api/analytics';
+import { usePermission } from '../hooks/usePermission';
 import AnalyticsKPICard from '../components/analytics/AnalyticsKPICard';
 import ExportReportButton from '../components/analytics/ExportReportButton';
 import VehicleStatusChart from '../components/analytics/VehicleStatusChart';
@@ -20,6 +21,7 @@ const Analytics = () => {
   const vehicles = useVehicles();
   const trips = useTrips();
   const expenses = useExpenses();
+  const { canEdit } = usePermission('analytics');
 
   const [summary, setSummary] = useState(null);
   const [monthlyRevenue, setMonthlyRevenue] = useState([]);
@@ -96,12 +98,14 @@ const Analytics = () => {
           <h2 className="text-xl font-bold text-primary">Reports & Analytics</h2>
           <p className="text-xs text-secondary">Analyze fleet financial metrics, ROI ratios, and operational efficiencies.</p>
         </div>
-        <ExportReportButton
-          summary={summary}
-          monthlyRevenue={monthlyRevenue}
-          costliestVehicles={costliestVehicles}
-          disabled={!summary}
-        />
+        {canEdit && (
+          <ExportReportButton
+            summary={summary}
+            monthlyRevenue={monthlyRevenue}
+            costliestVehicles={costliestVehicles}
+            disabled={!summary}
+          />
+        )}
       </div>
 
       {/* 4 KPI Cards — data from GET /api/analytics/summary */}
