@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { Plus, Search, X, Truck, Wrench, Calendar, Compass, DollarSign } from 'lucide-react';
 
-import { useVehicles, useTrips, useMaintenance, useAppActions } from '../context/AppContext';
+import { useVehicles, useTrips, useMaintenance, useAppActions, useExpenses } from '../context/AppContext';
 import { checkRegUniqueAPI } from '../api/vehicles';
+import { calculateVehicleHealth, getPredictiveMaintenance } from '../utils/insights';
 import KPICard from '../components/common/KPICard';
 import StatusBadge from '../components/common/StatusBadge';
 import DataTable from '../components/common/DataTable';
@@ -16,6 +17,7 @@ const Fleet = () => {
   const vehicles = useVehicles();
   const trips = useTrips();
   const maintenance = useMaintenance();
+  const expenses = useExpenses();
   const { addVehicle } = useAppActions();
 
   // Filter States
@@ -422,6 +424,74 @@ const Fleet = () => {
 
               {/* Body (Scrollable) */}
               <div className="flex-1 overflow-y-auto space-y-6 pr-1">
+                {/* Feature 6: Digital Health Card */}
+                {(() => {
+                  const maintFlag = getPredictiveMaintenance(selectedVehicle, maintenance);
+                  const vehicleExpenses = expenses.filter(e => e.vehicleId === selectedVehicle.id);
+                  const healthInfo = calculateVehicleHealth(selectedVehicle, maintFlag.status, vehicleExpenses, vehicleTrips);
+                  if (!healthInfo) return null;
+
+                  return (
+                    <div className="bg-[#0B0E14]/45 border border-default p-4.5 rounded-xl space-y-4 font-sans select-none">
+                      <div className="flex justify-between items-center pb-2.5 border-b border-default/55">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-text-secondary">Digital Health Card</span>
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${
+                          healthInfo.healthPct >= 90 ? 'bg-status-available/10 border-status-available/25 text-status-available' :
+                          healthInfo.healthPct >= 70 ? 'bg-yellow-400/10 border-yellow-400/25 text-yellow-400' :
+                          'bg-status-retired/10 border-status-retired/25 text-status-retired animate-pulse'
+                        }`}>
+                          {healthInfo.healthPct >= 90 ? 'Excellent' : healthInfo.healthPct >= 70 ? 'Fair' : 'Critical'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-6">
+                        {/* Radial Progress Ring */}
+                        <div className="relative flex items-center justify-center shrink-0">
+                          <svg className="w-18 h-18 transform -rotate-90">
+                            <circle cx="36" cy="36" r="30" className="stroke-border-default fill-transparent" strokeWidth="4.5" />
+                            <circle
+                              cx="36" cy="36" r="30"
+                              className={`fill-transparent transition-all duration-500 ${
+                                healthInfo.healthPct >= 90 ? 'stroke-status-available' :
+                                healthInfo.healthPct >= 70 ? 'stroke-yellow-400' : 'stroke-status-retired'
+                              }`}
+                              strokeWidth="4.5"
+                              strokeDasharray={2 * Math.PI * 30}
+                              strokeDashoffset={2 * Math.PI * 30 - (healthInfo.healthPct / 100) * (2 * Math.PI * 30)}
+                            />
+                          </svg>
+                          <div className="absolute flex flex-col items-center justify-center">
+                            <span className="font-mono text-xs font-black text-text-primary">{healthInfo.healthPct}%</span>
+                            <span className="text-[7px] text-text-muted font-bold uppercase tracking-widest">Health</span>
+                          </div>
+                        </div>
+
+                        {/* Financial / Operating Efficiency Metrics */}
+                        <div className="flex-1 grid grid-cols-2 gap-3.5">
+                          <div className="space-y-0.5">
+                            <span className="text-[8px] font-bold text-text-muted uppercase tracking-wider block">Est. Revenue</span>
+                            <span className="font-mono text-xs font-bold text-[#51e77b]">
+                              +${(healthInfo.lifetimeCost + healthInfo.profit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                          <div className="space-y-0.5">
+                            <span className="text-[8px] font-bold text-text-muted uppercase tracking-wider block">Fuel & Service Cost</span>
+                            <span className="font-mono text-xs font-bold text-[#ffb4ab]">
+                              -${healthInfo.lifetimeCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                          <div className="space-y-0.5 col-span-2 pt-1.5 border-t border-default/35 flex justify-between items-center">
+                            <span className="text-[8px] font-bold text-text-muted uppercase tracking-wider">Net Operating Profit</span>
+                            <span className={`font-mono text-xs font-black ${healthInfo.profit >= 0 ? 'text-[#51e77b]' : 'text-status-retired'}`}>
+                              {healthInfo.profit >= 0 ? '+' : ''}${healthInfo.profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Stats Grid */}
                 <div className="grid grid-cols-3 gap-3 bg-card border border-default p-4 rounded-xl">
                   <div className="text-center">
