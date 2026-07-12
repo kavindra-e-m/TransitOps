@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { Plus, Fuel, DollarSign, Calendar, Truck, AlertTriangle } from 'lucide-react';
 
-import { useExpenses, useVehicles, useAppActions } from '../context/AppContext';
+import { useExpenses, useVehicles, useTrips, useAppActions } from '../context/AppContext';
+import { detectFuelAnomalies } from '../utils/insights';
 import KPICard from '../components/common/KPICard';
 import DataTable from '../components/common/DataTable';
 import Modal from '../components/common/Modal';
@@ -13,6 +14,7 @@ import Input from '../components/common/Input';
 const FuelExpenses = () => {
   const expenses = useExpenses();
   const vehicles = useVehicles();
+  const trips = useTrips();
   const { addExpense } = useAppActions();
 
   // Filters State
@@ -38,6 +40,22 @@ const FuelExpenses = () => {
     date: new Date().toISOString().split('T')[0]
   });
   const [expenseErrors, setExpenseErrors] = useState({});
+
+  // Feature 7: Detect Fuel Refill Anomalies
+  const analyzedFuelLogs = useMemo(() => {
+    const fuelLogs = expenses.filter(e => e.type === 'fuel');
+    return detectFuelAnomalies(fuelLogs, expenses, trips, vehicles);
+  }, [expenses, trips, vehicles]);
+
+  const analyzedExpenses = useMemo(() => {
+    return expenses.map(exp => {
+      if (exp.type === 'fuel') {
+        const found = analyzedFuelLogs.find(f => f.id === exp.id);
+        return found || exp;
+      }
+      return exp;
+    });
+  }, [expenses, analyzedFuelLogs]);
 
   // Calculations
   const totalCost = useMemo(() => {
@@ -178,7 +196,29 @@ const FuelExpenses = () => {
     { 
       key: "detail", 
       label: "Log Detail", 
-      render: (row) => row.type === 'fuel' ? <span className="font-mono text-text-secondary">{row.liters} liters filled</span> : <span className="text-text-secondary capitalize">{row.type} Log</span> 
+      render: (row) => {
+        const isFuel = row.type === 'fuel';
+        const isAnomaly = row.anomaly?.flagged;
+        return (
+          <div className="flex flex-col">
+            {isFuel ? (
+              <span className="font-mono text-text-secondary">{row.liters} liters filled</span>
+            ) : (
+              <span className="text-text-secondary capitalize">{row.type} Log</span>
+            )}
+            {isAnomaly && (
+              <div className="mt-1 space-y-0.5 select-none max-w-sm">
+                {row.anomaly.reasons.map((r, i) => (
+                  <span key={i} className="flex items-start gap-1 text-[9px] text-[#F97316] font-semibold font-sans leading-tight">
+                    <AlertTriangle size={10} className="shrink-0 mt-0.5" />
+                    {r}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      }
     },
     { key: "cost", label: "Amount Charged", render: (row) => <span className="font-mono font-semibold">${row.cost.toLocaleString()}</span> },
     { key: "date", label: "Logged Date", render: (row) => <span className="font-mono">{row.date}</span> }
@@ -244,7 +284,7 @@ const FuelExpenses = () => {
       {/* Expenses Table */}
       <DataTable
         columns={columns}
-        data={expenses.filter(exp => selectedVehicleFilter === "All" || exp.vehicleId === Number(selectedVehicleFilter))}
+        data={analyzedExpenses.filter(exp => selectedVehicleFilter === "All" || exp.vehicleId === Number(selectedVehicleFilter))}
         emptyMessage="No transaction logs recorded."
       />
 

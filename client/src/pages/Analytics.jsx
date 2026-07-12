@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { 
   BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, Bar as RechartsBar 
 } from 'recharts';
-import { TrendingUp, Coins, Activity, Percent, ShieldOff } from 'lucide-react';
+import { TrendingUp, Coins, Activity, Percent, ShieldOff, AlertTriangle } from 'lucide-react';
 
+import { useExpenses, useVehicles, useTrips } from '../context/AppContext';
+import { detectFuelAnomalies } from '../utils/insights';
 import { getAnalyticsSummaryAPI, getMonthlyRevenueAPI, getTopCostliestVehiclesAPI } from '../api/analytics';
 import AnalyticsKPICard from '../components/analytics/AnalyticsKPICard';
 import ExportReportButton from '../components/analytics/ExportReportButton';
@@ -15,11 +17,21 @@ import FleetUtilizationChart from '../components/analytics/FleetUtilizationChart
 import FuelCostChart from '../components/analytics/FuelCostChart';
 
 const Analytics = () => {
+  const vehicles = useVehicles();
+  const trips = useTrips();
+  const expenses = useExpenses();
+
   const [summary, setSummary] = useState(null);
   const [monthlyRevenue, setMonthlyRevenue] = useState([]);
   const [costliestVehicles, setCostliestVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
+
+  // Fuel Refill Auditing
+  const fuelAnomalies = useMemo(() => {
+    const fuelLogs = expenses.filter(e => e.type === 'fuel');
+    return detectFuelAnomalies(fuelLogs, expenses, trips, vehicles).filter(f => f.anomaly.flagged);
+  }, [expenses, trips, vehicles]);
 
   // Fetch all analytics datasets
   useEffect(() => {
@@ -205,6 +217,82 @@ const Analytics = () => {
         <VehicleStatusChart />
         <FleetUtilizationChart utilization={summary?.fleetUtilization ?? 0} />
         <FuelCostChart />
+      </div>
+
+      {/* Fuel Anomalies Report Section */}
+      <div className="bg-card border border-default p-6 rounded-xl space-y-4 select-none">
+        <div className="flex justify-between items-center border-b border-default pb-3">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary flex items-center gap-2">
+            <AlertTriangle size={16} className="text-status-shop" />
+            Fuel Purchase Auditing & Anomalies
+          </h3>
+          {fuelAnomalies.length > 0 && (
+            <span className="bg-status-shop/15 border border-status-shop/30 text-status-shop px-2 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase">
+              {fuelAnomalies.length} Flagged Events
+            </span>
+          )}
+        </div>
+
+        {/* Audit Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-2">
+          <div className="bg-[#0B0E14]/40 border border-default/60 p-3.5 rounded-lg flex flex-col justify-between">
+            <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider">Total Audited Refills</span>
+            <span className="font-mono text-base font-bold text-text-primary mt-1">
+              {expenses.filter(e => e.type === 'fuel').length} refills
+            </span>
+          </div>
+          <div className="bg-[#0B0E14]/40 border border-default/60 p-3.5 rounded-lg flex flex-col justify-between">
+            <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider">Anomalous Refuels</span>
+            <span className="font-mono text-base font-bold text-status-shop mt-1">
+              {fuelAnomalies.length} flagged
+            </span>
+          </div>
+          <div className="bg-[#0B0E14]/40 border border-default/60 p-3.5 rounded-lg flex flex-col justify-between">
+            <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider">Refuel Anomaly Rate</span>
+            <span className="font-mono text-base font-bold text-text-primary mt-1">
+              {expenses.filter(e => e.type === 'fuel').length > 0
+                ? `${Math.round((fuelAnomalies.length / expenses.filter(e => e.type === 'fuel').length) * 100)}%`
+                : '0%'}
+            </span>
+          </div>
+        </div>
+
+        {/* Flagged logs list */}
+        <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+          {fuelAnomalies.map((log) => {
+            const v = vehicles.find(veh => veh.id === Number(log.vehicleId));
+            return (
+              <div key={log.id} className="p-3.5 rounded-lg border border-status-shop/20 bg-status-shop/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold font-mono text-xs text-text-primary">{v ? v.regNumber : `Vehicle #${log.vehicleId}`}</span>
+                    <span className="text-[10px] text-text-secondary">— {v ? v.name : 'Unknown Model'}</span>
+                    <span className="text-[9px] text-text-muted font-mono ml-auto md:ml-0">{log.date}</span>
+                  </div>
+                  <div className="space-y-1 pt-1.5 border-t border-default/20">
+                    {log.anomaly.reasons.map((r, i) => (
+                      <div key={i} className="flex items-start gap-1 text-[10px] text-status-shop font-medium leading-relaxed">
+                        <span className="shrink-0 mt-0.5 text-[9px]">•</span>
+                        <span>{r}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="shrink-0 text-left md:text-right space-y-0.5 select-none font-mono">
+                  <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider block">Charged Amount</span>
+                  <span className="text-sm font-bold text-[#ffb4ab]">${log.cost.toLocaleString()}</span>
+                  <span className="text-[9px] text-text-muted block">{log.liters} liters refilled</span>
+                </div>
+              </div>
+            );
+          })}
+          {fuelAnomalies.length === 0 && (
+            <div className="text-center py-10 text-xs text-text-muted border border-dashed border-default rounded-lg">
+              No refuel anomalies flagged in the current dataset. All refuels comply with audit rules.
+            </div>
+          )}
+        </div>
       </div>
 
     </div>

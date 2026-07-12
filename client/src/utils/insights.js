@@ -359,13 +359,19 @@ export function getVehicleAvgEfficiency(vehicleId, trips, expenses) {
  * @param {Array} trips
  * @returns {Array} fuel logs with `.anomaly: { flagged, expectedLiters, actualLiters }` attached
  */
-export function detectFuelAnomalies(fuelLogs, allExpenses, trips) {
+export function detectFuelAnomalies(fuelLogs, allExpenses, trips, vehicles) {
   // Build per-vehicle efficiency map
   const vehicleIds = [...new Set(fuelLogs.map(f => f.vehicleId))];
   const efficiencyMap = {};
   vehicleIds.forEach(vid => {
     efficiencyMap[vid] = getVehicleAvgEfficiency(vid, trips, allExpenses);
   });
+
+  // Fleet-wide average fuel price (cost per liter)
+  const validFuelLogs = fuelLogs.filter(f => f.liters > 0 && f.cost > 0);
+  const totalCost = validFuelLogs.reduce((s, f) => s + f.cost, 0);
+  const totalLiters = validFuelLogs.reduce((s, f) => s + f.liters, 0);
+  const fleetAvgCostPerLiter = totalLiters > 0 ? totalCost / totalLiters : 2.5;
 
   // Sort fuel logs by vehicleId + date to compute distance-since-last-fill
   const sorted = [...fuelLogs].sort((a, b) => {
@@ -395,15 +401,44 @@ export function detectFuelAnomalies(fuelLogs, allExpenses, trips) {
     const avgEff = efficiencyMap[log.vehicleId] || DEFAULT_FUEL_EFFICIENCY_KM_PER_L;
     const expectedLiters = distanceSinceLastFill > 0
       ? distanceSinceLastFill / avgEff
-      : null; // no distance data → can't flag
+      : null;
 
     const actualLiters = log.liters || 0;
-    const flagged = expectedLiters !== null && actualLiters > expectedLiters * FUEL_ANOMALY_MULTIPLIER;
+    
+    // Rule 1: unit price deviation >30%
+    const costPerLiter = actualLiters > 0 ? log.cost / actualLiters : 0;
+    const costDeviation = fleetAvgCostPerLiter > 0
+      ? Math.abs(costPerLiter - fleetAvgCostPerLiter) / fleetAvgCostPerLiter
+      : 0;
+    const isCostAnomaly = costDeviation > 0.3;
+
+    // Rule 2: volume exceeds vehicle capacity (Truck: 150L, Van: 80L)
+    const veh = vehicles ? vehicles.find(v => v.id === log.vehicleId) : null;
+    const isTruck = veh ? veh.type.toLowerCase().includes('truck') : true;
+    const tankLimit = isTruck ? 150 : 80;
+    const isVolumeAnomaly = actualLiters > tankLimit;
+
+    // Rule 3: consumption rate exceeds expected by 30%
+    const isConsumptionAnomaly = expectedLiters !== null && actualLiters > expectedLiters * FUEL_ANOMALY_MULTIPLIER;
+
+    const flagged = isCostAnomaly || isVolumeAnomaly || isConsumptionAnomaly;
+
+    const reasons = [];
+    if (isCostAnomaly) {
+      reasons.push(`Unit price ($${costPerLiter.toFixed(2)}/L) deviates >30% from fleet average ($${fleetAvgCostPerLiter.toFixed(2)}/L)`);
+    }
+    if (isVolumeAnomaly) {
+      reasons.push(`Purchase volume (${actualLiters} L) exceeds vehicle tank capacity limit (${tankLimit} L)`);
+    }
+    if (isConsumptionAnomaly) {
+      reasons.push(`Fuel consumed (${actualLiters} L) is >30% worse than expected (${expectedLiters.toFixed(1)} L) for distance`);
+    }
 
     return {
       ...log,
       anomaly: {
         flagged,
+        reasons,
         expectedLiters: expectedLiters ? Math.round(expectedLiters * 10) / 10 : null,
         actualLiters,
         avgEfficiency: Math.round(avgEff * 10) / 10,
