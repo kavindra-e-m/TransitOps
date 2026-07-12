@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { Shield, Settings as SettingsIcon, Check, Minus, Lock, User, Info } from 'lucide-react';
 
@@ -236,13 +235,9 @@ const Settings = () => {
                     </td>
                     
                     {rolesList.map((role) => {
-                      // Check permissions
-                      const allowed = rbacMatrix[role]?.includes(cap.key) || 
+                      const allowed = rbacMatrix[role]?.includes(cap.key) ||
                                       rbacMatrix[role]?.includes(cap.key.replace('manage_', 'view_')) ||
                                       (cap.key.startsWith('view_') && rbacMatrix[role]?.includes(cap.key.replace('view_', 'manage_')));
-                      
-                      const isManager = role === 'Fleet Manager';
-                      
                       return (
                         <td key={role} className="p-3 text-center align-middle">
                           <div className="flex items-center justify-center">
