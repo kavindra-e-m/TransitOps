@@ -47,6 +47,13 @@ app.use('/api/rbac', require('./routes/rbacRoutes'));
 server.listen(PORT, () => {
   console.log(`Server + WebSockets running on port ${PORT}`);
   
+  // Run map columns schema migration
+  try {
+    require('./db/migrate-map');
+  } catch (err) {
+    console.error('Migration failed:', err.message);
+  }
+  
   // Start vehicle location simulation
   const startSimulation = require('./simulation');
   const db = require('./db/connection');

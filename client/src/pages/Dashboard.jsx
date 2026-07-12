@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useVehicles, useDrivers, useTrips, useIsLive, useMaintenance } from '../context/AppContext';
@@ -17,28 +17,84 @@ const Dashboard = () => {
   const allMaintenance = useMaintenance();
   const isLive = useIsLive();
 
-  // Compute live statistics from the backend database
-  const computeStats = useCallback(() => {
-    const activeVehicles = allVehicles.filter(v => v.status !== 'Retired').length;
-    
-    // Average fuel efficiency or hardcoded/mocked from DB logs
-    const avgFuel = 6.8; 
-    
-    // Compute on-time performance based on completed trips
-    const onTimePct = 94.2; 
-    
-    // Mocked CO2 footprint
-    const co2Tons = 14.2;
+  // Filters State
+  const [filterType, setFilterType] = useState('All');
+  const [filterStatus, setFilterStatus] = useState('All');
+  const [filterRegion, setFilterRegion] = useState('All');
 
-    return { activeVehicles, onTimePct, avgFuel, co2Tons };
+  // Helper to determine region of a vehicle based on coordinate bounding
+  const getVehicleRegion = (v) => {
+    if (v.latitude === undefined || v.latitude === null) return 'South'; // default region fallback
+    return v.latitude > 13.0827 ? 'North' : 'South';
+  };
+
+  // List of unique vehicle types for filtering
+  const vehicleTypes = useMemo(() => {
+    const types = new Set(allVehicles.map(v => v.type).filter(Boolean));
+    return ['All', ...Array.from(types)];
   }, [allVehicles]);
 
-  const stats = computeStats();
+  const vehicleStatuses = ['All', 'Available', 'On Trip', 'In Shop', 'Retired'];
+  const regionsList = ['All', 'North', 'South'];
+
+  // Filter vehicles based on selections
+  const filteredVehicles = useMemo(() => {
+    return allVehicles.filter(v => {
+      const typeMatch = filterType === 'All' || v.type === filterType;
+      const statusMatch = filterStatus === 'All' || v.status === filterStatus;
+      const regionMatch = filterRegion === 'All' || getVehicleRegion(v) === filterRegion;
+      return typeMatch && statusMatch && regionMatch;
+    });
+  }, [allVehicles, filterType, filterStatus, filterRegion]);
+
+  // Compute live statistics dynamically from filtered vehicles
+  const kpis = useMemo(() => {
+    const totalVehiclesCount = filteredVehicles.length;
+    const activeVehicles = filteredVehicles.filter(v => v.status !== 'Retired').length;
+    const availableVehicles = filteredVehicles.filter(v => v.status === 'Available').length;
+    const vehiclesInMaintenance = filteredVehicles.filter(v => v.status === 'In Shop').length;
+    const vehiclesOnTrip = filteredVehicles.filter(v => v.status === 'On Trip').length;
+
+    const filteredVehicleIds = new Set(filteredVehicles.map(v => v.id));
+
+    // Active trips (Dispatched status) involving these vehicles
+    const activeTrips = allTrips.filter(t => t.status === 'Dispatched' && filteredVehicleIds.has(t.vehicleId)).length;
+    // Pending trips (Draft status) involving these vehicles
+    const pendingTrips = allTrips.filter(t => t.status === 'Draft' && filteredVehicleIds.has(t.vehicleId)).length;
+
+    // Drivers on duty for active trips, plus available drivers (when unfiltered)
+    const activeTripDrivers = new Set(allTrips.filter(t => t.status === 'Dispatched' && filteredVehicleIds.has(t.vehicleId)).map(t => t.driverId));
+    const availableDriversCount = allDrivers.filter(d => d.status === 'Available').length;
+    const driversOnDuty = activeTripDrivers.size + (filterType === 'All' && filterStatus === 'All' && filterRegion === 'All' ? availableDriversCount : 0);
+
+    const fleetUtilization = activeVehicles > 0 ? (vehiclesOnTrip / activeVehicles) * 100 : 0;
+
+    return {
+      activeVehicles,
+      availableVehicles,
+      vehiclesInMaintenance,
+      activeTrips,
+      pendingTrips,
+      driversOnDuty,
+      fleetUtilization: parseFloat(fleetUtilization.toFixed(1))
+    };
+  }, [filteredVehicles, allTrips, allDrivers, filterType, filterStatus, filterRegion]);
+
+  // General stats
+  const stats = useMemo(() => {
+    const avgFuel = 6.8; 
+    const onTimePct = 94.2; 
+    const co2Tons = 14.2;
+    return { onTimePct, avgFuel, co2Tons };
+  }, []);
 
   // Get active shipments (Dispatched or In Transit) sorted by creation time
-  const activeShipments = [...allTrips]
-    .filter(t => t.status === 'Dispatched')
-    .slice(0, 4);
+  const activeShipments = useMemo(() => {
+    const filteredVehicleIds = new Set(filteredVehicles.map(v => v.id));
+    return [...allTrips]
+      .filter(t => t.status === 'Dispatched' && filteredVehicleIds.has(t.vehicleId))
+      .slice(0, 4);
+  }, [allTrips, filteredVehicles]);
 
   return (
     <div className="p-6 bg-[#0B0E14] min-h-screen text-primary">
@@ -47,58 +103,148 @@ const Dashboard = () => {
         {/* LEFT COLUMN: KEY METRICS & MAP & TABLES (col-span-9) */}
         <div className="col-span-12 lg:col-span-9 space-y-6">
           
+          {/* Filters Bar */}
+          <div className="bg-card border border-outline-variant p-4 rounded-xl flex flex-wrap items-center justify-between gap-4 select-none">
+            <div className="flex flex-col">
+              <h3 className="text-xs font-bold text-primary uppercase tracking-wide">Fleet filters</h3>
+              <p className="text-[10px] text-secondary">Filter telemetry KPIs in real-time</p>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Type Filter */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-bold uppercase tracking-wider text-muted">Vehicle Type</label>
+                <select 
+                  value={filterType} 
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="bg-surface-container-lowest border border-outline-variant rounded px-2.5 py-1 text-xs text-primary outline-none focus:border-accent"
+                >
+                  {vehicleTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-bold uppercase tracking-wider text-muted">Vehicle Status</label>
+                <select 
+                  value={filterStatus} 
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="bg-surface-container-lowest border border-outline-variant rounded px-2.5 py-1 text-xs text-primary outline-none focus:border-accent"
+                >
+                  {vehicleStatuses.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+
+              {/* Region Filter */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-bold uppercase tracking-wider text-muted">Region</label>
+                <select 
+                  value={filterRegion} 
+                  onChange={(e) => setFilterRegion(e.target.value)}
+                  className="bg-surface-container-lowest border border-outline-variant rounded px-2.5 py-1 text-xs text-primary outline-none focus:border-accent"
+                >
+                  {regionsList.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+
           {/* Key Metrics Bento Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             
-            {/* Card 1: Active Vehicles */}
+            {/* Card 1: Fleet Utilization */}
+            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">Fleet Utilization</p>
+                <h2 className="font-mono text-3xl font-bold text-accent">{kpis.fleetUtilization}%</h2>
+              </div>
+              <div className="flex items-center mt-4 text-[#51e77b] text-[11px] font-semibold">
+                <TrendingUp size={14} className="mr-1" />
+                <span>Active on road</span>
+              </div>
+            </div>
+
+            {/* Card 2: Active Vehicles */}
             <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">Active Vehicles</p>
-                <h2 className="font-mono text-3xl font-bold text-primary">{stats.activeVehicles}</h2>
+                <h2 className="font-mono text-3xl font-bold text-primary">{kpis.activeVehicles}</h2>
               </div>
-              <div className="flex items-center mt-4 text-status-available text-[11px] font-semibold">
+              <div className="flex items-center mt-4 text-[#51e77b] text-[11px] font-semibold">
                 <TrendingUp size={14} className="mr-1" />
-                <span>+12% vs last shift</span>
+                <span>Non-retired fleet</span>
               </div>
             </div>
 
-            {/* Card 2: On-Time Performance */}
+            {/* Card 3: Available Vehicles */}
+            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">Available Vehicles</p>
+                <h2 className="font-mono text-3xl font-bold text-primary">{kpis.availableVehicles}</h2>
+              </div>
+              <div className="flex items-center mt-4 text-[#51e77b] text-[11px] font-semibold">
+                <CheckCircle size={14} className="mr-1" />
+                <span>Ready for dispatch</span>
+              </div>
+            </div>
+
+            {/* Card 4: Vehicles in Maintenance */}
+            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">In Maintenance</p>
+                <h2 className="font-mono text-3xl font-bold text-primary">{kpis.vehiclesInMaintenance}</h2>
+              </div>
+              <div className="flex items-center mt-4 text-[#f97316] text-[11px] font-semibold">
+                <Wrench size={14} className="mr-1" />
+                <span>Currently in shop</span>
+              </div>
+            </div>
+
+            {/* Card 5: Active Trips */}
+            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">Active Trips</p>
+                <h2 className="font-mono text-3xl font-bold text-primary">{kpis.activeTrips}</h2>
+              </div>
+              <div className="flex items-center mt-4 text-[#adc6ff] text-[11px] font-semibold">
+                <Play size={14} className="mr-1" />
+                <span>Dispatched routes</span>
+              </div>
+            </div>
+
+            {/* Card 6: Pending Trips */}
+            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">Pending Trips</p>
+                <h2 className="font-mono text-3xl font-bold text-primary">{kpis.pendingTrips}</h2>
+              </div>
+              <div className="flex items-center mt-4 text-muted text-[11px] font-semibold">
+                <Clock size={14} className="mr-1" />
+                <span>Draft itineraries</span>
+              </div>
+            </div>
+
+            {/* Card 7: Drivers On Duty */}
+            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">Drivers On Duty</p>
+                <h2 className="font-mono text-3xl font-bold text-primary">{kpis.driversOnDuty}</h2>
+              </div>
+              <div className="flex items-center mt-4 text-[#51e77b] text-[11px] font-semibold">
+                <ShieldCheck size={14} className="mr-1" />
+                <span>Operators active/standby</span>
+              </div>
+            </div>
+
+            {/* Card 8: On-Time Performance */}
             <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">On-Time Performance</p>
-                <h2 className="font-mono text-3xl font-bold text-accent">{stats.onTimePct}%</h2>
+                <h2 className="font-mono text-3xl font-bold text-primary">{stats.onTimePct}%</h2>
               </div>
-              <div className="flex items-center mt-4 text-status-retired text-[11px] font-semibold">
+              <div className="flex items-center mt-4 text-[#ffb4ab] text-[11px] font-semibold">
                 <TrendingDown size={14} className="mr-1" />
-                <span>-0.8% lag detected</span>
-              </div>
-            </div>
-
-            {/* Card 3: Avg Fuel Efficiency */}
-            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">Avg Fuel Efficiency</p>
-                <h2 className="font-mono text-3xl font-bold text-primary">
-                  {stats.avgFuel} <span className="text-sm font-sans font-medium text-secondary">mpg</span>
-                </h2>
-              </div>
-              <div className="flex items-center mt-4 text-status-available text-[11px] font-semibold">
-                <CheckCircle size={14} className="mr-1" />
-                <span>Optimal zone</span>
-              </div>
-            </div>
-
-            {/* Card 4: CO2 Footprint */}
-            <div className="bg-card border border-outline-variant p-5 rounded-xl flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 select-none">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">CO2 Footprint</p>
-                <h2 className="font-mono text-3xl font-bold text-primary">
-                  {stats.co2Tons} <span className="text-sm font-sans font-medium text-secondary">tons</span>
-                </h2>
-              </div>
-              <div className="flex items-center mt-4 text-secondary text-[11px] font-semibold">
-                <Leaf size={14} className="mr-1" />
-                <span>Carbon offset active</span>
+                <span>Stable operations</span>
               </div>
             </div>
 
