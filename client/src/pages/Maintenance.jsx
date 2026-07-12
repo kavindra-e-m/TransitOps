@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { Plus, Wrench, AlertCircle, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Plus, Wrench, AlertCircle, CheckCircle2, ChevronRight, X } from 'lucide-react';
 
 import { useMaintenance, useVehicles, useAppActions } from '../context/AppContext';
 import KPICard from '../components/common/KPICard';

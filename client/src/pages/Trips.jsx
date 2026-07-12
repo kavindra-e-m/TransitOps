@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { 
   Plus, Route, MapPin, Compass, AlertTriangle, ShieldAlert,
-  ChevronRight, Calendar, User, Truck, HelpCircle
+  ChevronRight, Calendar, User, Truck, HelpCircle, X
 } from 'lucide-react';
 
 import { 
@@ -45,13 +45,27 @@ const Trips = () => {
   });
   const [formErrors, setFormErrors] = useState({});
 
+  // Complete Trip modal state
+  const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+  const [completeFormValues, setCompleteFormValues] = useState({
+    finalOdometer: "",
+    fuelLiters: "",
+    fuelCost: ""
+  });
+  const [completeErrors, setCompleteErrors] = useState({});
+
+  const CURRENT_DATE = new Date("2026-07-12");
+  const isLicenseExpired = (expiryDateStr) => {
+    return new Date(expiryDateStr) < CURRENT_DATE;
+  };
+
   // Filter list of available vehicles/drivers (only Available and unexpired)
   const availableVehicles = useMemo(() => {
     return vehicles.filter(v => v.status === 'Available');
   }, [vehicles]);
 
   const availableDrivers = useMemo(() => {
-    return drivers.filter(d => d.status === 'Available');
+    return drivers.filter(d => d.status === 'Available' && !isLicenseExpired(d.licenseExpiryDate));
   }, [drivers]);
 
   // Find selected objects inside the form
@@ -135,6 +149,53 @@ const Trips = () => {
       setIsModalOpen(false);
     } catch {
       // Interceptors handle toast
+    }
+  };
+
+  const openCompleteModal = () => {
+    if (!detailVehicleObj || !selectedTripObj) return;
+    const estOdo = detailVehicleObj.odometer + selectedTripObj.plannedDistance;
+    setCompleteFormValues({
+      finalOdometer: String(estOdo),
+      fuelLiters: "",
+      fuelCost: ""
+    });
+    setCompleteErrors({});
+    setIsCompleteModalOpen(true);
+  };
+
+  const handleCompleteSubmit = async (e) => {
+    e.preventDefault();
+    const errors = {};
+    if (!completeFormValues.finalOdometer || isNaN(completeFormValues.finalOdometer) || Number(completeFormValues.finalOdometer) < detailVehicleObj.odometer) {
+      errors.finalOdometer = `Must be at least the starting odometer (${detailVehicleObj.odometer})`;
+    }
+    if (completeFormValues.fuelLiters && (isNaN(completeFormValues.fuelLiters) || Number(completeFormValues.fuelLiters) <= 0)) {
+      errors.fuelLiters = "Must be a positive volume";
+    }
+    if (completeFormValues.fuelCost && (isNaN(completeFormValues.fuelCost) || Number(completeFormValues.fuelCost) <= 0)) {
+      errors.fuelCost = "Must be a positive cost";
+    }
+    if ((completeFormValues.fuelLiters && !completeFormValues.fuelCost) || (!completeFormValues.fuelLiters && completeFormValues.fuelCost)) {
+      errors.fuelCost = "Both liters and cost must be specified to log fuel";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setCompleteErrors(errors);
+      return;
+    }
+
+    try {
+      await completeTrip(selectedTripObj.rawId, {
+        finalOdometer: Number(completeFormValues.finalOdometer),
+        fuelLiters: completeFormValues.fuelLiters ? Number(completeFormValues.fuelLiters) : undefined,
+        fuelCost: completeFormValues.fuelCost ? Number(completeFormValues.fuelCost) : undefined
+      });
+      toast.success(`Trip T\${String(selectedTripObj.rawId).padStart(3, '0')} Completed!`);
+      setIsCompleteModalOpen(false);
+      setSelectedTripId(null);
+    } catch (err) {
+      // handled
     }
   };
 
@@ -522,15 +583,7 @@ const Trips = () => {
 
                   {/* Complete dispatch */}
                   <Button
-                    onClick={async () => {
-                      try {
-                        await completeTrip(selectedTripObj.rawId);
-                        toast.success(`Trip T${String(selectedTripObj.rawId).padStart(3, '0')} Completed!`);
-                        setSelectedTripId(null);
-                      } catch {
-                        // handled
-                      }
-                    }}
+                    onClick={openCompleteModal}
                     className="flex-1 !py-2.5"
                   >
                     Complete Dispatch
@@ -541,6 +594,59 @@ const Trips = () => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Complete Trip Modal */}
+      <Modal
+        isOpen={isCompleteModalOpen}
+        onClose={() => {
+          setIsCompleteModalOpen(false);
+          setCompleteErrors({});
+        }}
+        title="Complete Dispatch Route"
+      >
+        <form onSubmit={handleCompleteSubmit} className="space-y-4 font-sans">
+          <p className="text-xs text-text-secondary leading-relaxed">
+            Record final odometer readings and optionally log any fuel consumed to complete trip <strong>T{selectedTripObj && String(selectedTripObj.rawId).padStart(3, '0')}</strong>.
+          </p>
+
+          <Input
+            label={`Final Odometer Reading (Starting: ${detailVehicleObj?.odometer || 0} km)`}
+            value={completeFormValues.finalOdometer}
+            onChange={(e) => setCompleteFormValues(p => ({ ...p, finalOdometer: e.target.value }))}
+            error={completeErrors.finalOdometer}
+            placeholder="e.g. 12150"
+            required
+            type="number"
+          />
+
+          <div className="border-t border-default pt-4 space-y-3">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block">Optional: Fuel Consumed</span>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Liters Refilled"
+                value={completeFormValues.fuelLiters}
+                onChange={(e) => setCompleteFormValues(p => ({ ...p, fuelLiters: e.target.value }))}
+                error={completeErrors.fuelLiters}
+                placeholder="e.g. 45"
+                type="number"
+              />
+              <Input
+                label="Total Fuel Cost ($)"
+                value={completeFormValues.fuelCost}
+                onChange={(e) => setCompleteFormValues(p => ({ ...p, fuelCost: e.target.value }))}
+                error={completeErrors.fuelCost}
+                placeholder="e.g. 68"
+                type="number"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-default select-none">
+            <Button variant="secondary" onClick={() => setIsCompleteModalOpen(false)}>Cancel</Button>
+            <Button type="submit">Complete Trip & Save</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

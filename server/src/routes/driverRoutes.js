@@ -27,8 +27,10 @@ router.put('/:id', rbac('Fleet Manager', 'Dispatcher'), [
 ], driverController.update);
 
 router.patch('/:id/status', rbac('Fleet Manager', 'Dispatcher'), [
-  body('status').isIn(['Available', 'On Trip', 'Suspended']).withMessage('Invalid status'),
+  body('status').isIn(['Available', 'On Trip', 'Off Duty', 'Suspended']).withMessage('Invalid status'),
   validate
 ], driverController.updateStatus);
+
+router.delete('/:id', rbac('Fleet Manager'), driverController.delete);
 
 module.exports = router;

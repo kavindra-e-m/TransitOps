@@ -9,7 +9,7 @@ export const getVehicleLocationsAPI = () => {
 };
 
 export const checkRegUniqueAPI = (regNo) => {
-  return client.get(`/vehicles/check/${regNo}`).then(res => res.data);
+  return client.get(`/vehicles/check-reg/${regNo}`).then(res => res.data);
 };
 
 export const createVehicleAPI = (vehicleData) => {
@@ -22,4 +22,8 @@ export const updateVehicleAPI = (id, vehicleData) => {
 
 export const getVehicleHistoryAPI = (id) => {
   return client.get(`/vehicles/${id}/history`).then(res => res.data);
+};
+
+export const deleteVehicleAPI = (id) => {
+  return client.delete(`/vehicles/${id}`).then(res => res.data);
 };
