@@ -5,10 +5,11 @@ import {
   BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, Bar as RechartsBar 
 } from 'recharts';
-import { Download, TrendingUp, Coins, Activity, Percent, ShieldOff } from 'lucide-react';
+import { TrendingUp, Coins, Activity, Percent, ShieldOff } from 'lucide-react';
 
 import { getAnalyticsSummaryAPI, getMonthlyRevenueAPI, getTopCostliestVehiclesAPI } from '../api/analytics';
 import AnalyticsKPICard from '../components/analytics/AnalyticsKPICard';
+import ExportReportButton from '../components/analytics/ExportReportButton';
 import VehicleStatusChart from '../components/analytics/VehicleStatusChart';
 import FleetUtilizationChart from '../components/analytics/FleetUtilizationChart';
 import FuelCostChart from '../components/analytics/FuelCostChart';
@@ -47,44 +48,6 @@ const Analytics = () => {
     fetchAnalyticsData();
   }, []);
 
-  // CSV Generator function
-  const handleCSVExport = () => {
-    if (!summary) return;
-    try {
-      let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += "Category,Parameter,Value,Formula/Context\n";
-
-      // Metrics Summary
-      csvContent += `KPI,Fuel Efficiency,${summary.fuelEfficiency} L/100km,Avg liters consumed per 100km\n`;
-      csvContent += `KPI,Fleet Utilization,${summary.fleetUtilization.toFixed(1)}%,active vehicles / total vehicles\n`;
-      csvContent += `KPI,Operational Cost,$${summary.operationalCost.toLocaleString()},"Fuel + Maintenance + Expenses"\n`;
-      csvContent += `KPI,Vehicle ROI,${(summary.vehicleROI * 100).toFixed(1)}%,"ROI = (Revenue - (Maint + Fuel)) / Acq Cost"\n`;
-
-      // Monthly Revenue Table
-      csvContent += "\nMonthly Revenue Records\nMonth,Revenue ($)\n";
-      monthlyRevenue.forEach(row => {
-        csvContent += `${row.month},${row.revenue}\n`;
-      });
-
-      // Costliest Vehicles Table
-      csvContent += "\nTop Costliest Vehicles\nRegistration Number,Total Operational Cost ($)\n";
-      costliestVehicles.forEach(row => {
-        csvContent += `${row.reg_no},${row.totalCost}\n`;
-      });
-
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `TransitOps_Analytics_Report_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success("CSV report downloaded successfully.");
-    } catch (err) {
-      toast.error("Failed to generate CSV export.");
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center text-sm text-text-secondary select-none">
@@ -121,13 +84,12 @@ const Analytics = () => {
           <h2 className="text-xl font-bold text-text-primary">Reports & Analytics</h2>
           <p className="text-xs text-text-secondary">Analyze fleet financial metrics, ROI ratios, and operational efficiencies.</p>
         </div>
-        <button
-          onClick={handleCSVExport}
-          className="px-4 py-2 bg-accent hover:bg-accent-hover text-[#0B0E14] font-semibold text-xs rounded-lg shadow-lg shadow-accent/10 border border-transparent transition-all flex items-center gap-2"
-        >
-          <Download size={14} />
-          Export CSV Report
-        </button>
+        <ExportReportButton
+          summary={summary}
+          monthlyRevenue={monthlyRevenue}
+          costliestVehicles={costliestVehicles}
+          disabled={!summary}
+        />
       </div>
 
       {/* 4 KPI Cards — data from GET /api/analytics/summary */}
