@@ -79,13 +79,30 @@ exports.dispatch = (req, res) => {
 
 exports.complete = (req, res) => {
   const { id } = req.params;
+  const { final_odometer, fuel_liters, fuel_cost } = req.body;
+  
   const completeTx = db.transaction((tripId) => {
     const trip = db.prepare('SELECT * FROM trips WHERE id = ?').get(tripId);
     if (!trip) throw new Error('Trip not found');
     if (trip.status !== 'Dispatched') throw new Error('Only Dispatched trips can be completed');
 
-    db.prepare("UPDATE vehicles SET status = 'Available' WHERE id = ?").run(trip.vehicle_id);
-    db.prepare("UPDATE drivers SET status = 'Available' WHERE id = ?").run(trip.driver_id);
+    const vehicle = db.prepare('SELECT * FROM vehicles WHERE id = ?').get(trip.vehicle_id);
+    if (final_odometer !== undefined && final_odometer !== null && final_odometer !== '') {
+      if (Number(final_odometer) < vehicle.odometer) {
+        throw new Error('Final odometer cannot be less than starting odometer: ' + vehicle.odometer);
+      }
+      db.prepare("UPDATE vehicles SET odometer = ? WHERE id = ?").run(Number(final_odometer), trip.vehicle_id);
+    }
+
+    const activeOdometer = final_odometer ? Number(final_odometer) : vehicle.odometer;
+
+    if (fuel_liters && fuel_cost) {
+      db.prepare("INSERT INTO fuel_logs (vehicle_id, liters, cost, date, odometer_at_fill) VALUES (?, ?, ?, ?, ?)")
+        .run(trip.vehicle_id, Number(fuel_liters), Number(fuel_cost), new Date().toISOString().split('T')[0], activeOdometer);
+    }
+
+    db.prepare("UPDATE vehicles SET status = 'Available' WHERE id = ? AND status != 'Retired'").run(trip.vehicle_id);
+    db.prepare("UPDATE drivers SET status = 'Available' WHERE id = ? AND status != 'Suspended'").run(trip.driver_id);
     db.prepare("UPDATE trips SET status = 'Completed', completed_at = CURRENT_TIMESTAMP WHERE id = ?").run(tripId);
 
     return db.prepare('SELECT * FROM trips WHERE id = ?').get(tripId);

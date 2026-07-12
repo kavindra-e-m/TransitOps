@@ -147,6 +147,55 @@ const Settings = () => {
 
       </div>
 
+      {/* Top Row: User Profile + System Information */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        {/* User Profile Card */}
+        <div className="bg-card rounded-xl border border-default p-6 space-y-4 select-none">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary border-b border-default pb-2.5 flex items-center gap-2">
+            <User size={16} className="text-accent" />
+            User Profile
+          </h3>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
+              <span className="text-lg font-bold text-accent select-none">
+                {user?.name?.charAt(0).toUpperCase() ?? '?'}
+              </span>
+            </div>
+            <div className="space-y-1 min-w-0">
+              <p className="text-sm font-semibold text-text-primary truncate">{user?.name ?? '—'}</p>
+              <p className="text-xs text-text-muted truncate">{user?.email ?? '—'}</p>
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${ROLE_COLOR[role] ?? 'text-text-muted bg-card border-default'}`}>
+                {role ?? 'Unknown Role'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* System Information Card */}
+        <div className="bg-card rounded-xl border border-default p-6 space-y-4 select-none">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary border-b border-default pb-2.5 flex items-center gap-2">
+            <Info size={16} className="text-accent" />
+            System Information
+          </h3>
+          <dl className="space-y-2.5">
+            {[
+              { label: 'Application',  value: 'TransitOps Fleet Manager' },
+              { label: 'Version',      value: 'v1.0.0' },
+              { label: 'Stack',        value: 'React + Node/Express + SQLite' },
+              { label: 'Auth',         value: 'JWT — Session in memory' },
+              { label: 'Data Polling', value: 'Every 20 seconds' },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between gap-4">
+                <dt className="text-xs text-text-muted shrink-0">{label}</dt>
+                <dd className="text-xs font-semibold text-text-primary text-right truncate">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Left Column: General Settings (4/12 width) */}
         <form onSubmit={handleSaveSettings} className="xl:col-span-4 p-6 rounded-xl border border-default bg-card space-y-4 select-none">

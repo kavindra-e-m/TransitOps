@@ -68,3 +68,21 @@ exports.updateStatus = (req, res) => {
   }
 };
 
+exports.delete = (req, res) => {
+  const { id } = req.params;
+  try {
+    // Check if driver has active dispatched trips
+    const activeTrips = db.prepare("SELECT id FROM trips WHERE driver_id = ? AND status = 'Dispatched'").get(id);
+    if (activeTrips) {
+      return res.status(400).json({ error: 'Cannot delete driver with active dispatched trips.' });
+    }
+
+    db.prepare('DELETE FROM drivers WHERE id = ?').run(id);
+    const io = req.app.get('io');
+    io.emit('telemetry_update', { type: 'DRIVER_DELETED', payload: { id: Number(id) } });
+    res.json({ message: 'Driver deleted successfully.', id: Number(id) });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete driver.' });
+  }
+};
+
