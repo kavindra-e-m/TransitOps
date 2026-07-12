@@ -16,7 +16,7 @@ export const exportAnalyticsCSV = (summary, monthlyRevenue = [], costliestVehicl
     csv += 'Category,Parameter,Value,Formula/Context\n';
     csv += `KPI,Fuel Efficiency,${summary.fuelEfficiency} L/100km,Avg liters consumed per 100km\n`;
     csv += `KPI,Fleet Utilization,${summary.fleetUtilization.toFixed(1)}%,active vehicles / total vehicles\n`;
-    csv += `KPI,Operational Cost,$${summary.operationalCost.toLocaleString()},"Fuel + Maintenance + Expenses"\n`;
+    csv += `KPI,Operational Cost,$${summary.operationalCost.toFixed(2)},"Fuel + Maintenance + Expenses"\n`;
     csv += `KPI,Vehicle ROI,${(summary.vehicleROI * 100).toFixed(1)}%,"ROI = (Revenue - (Maint + Fuel)) / Acq Cost"\n`;
 
     csv += '\nMonthly Revenue Records\nMonth,Revenue ($)\n';
