@@ -220,7 +220,7 @@ const FuelExpenses = () => {
         );
       }
     },
-    { key: "cost", label: "Amount Charged", render: (row) => <span className="font-mono font-semibold">${row.cost.toLocaleString()}</span> },
+    { key: "cost", label: "Amount Charged", render: (row) => <span className="font-mono font-semibold">₹{row.cost.toLocaleString('en-IN')}</span> },
     { key: "date", label: "Logged Date", render: (row) => <span className="font-mono">{row.date}</span> }
   ];
 
@@ -246,9 +246,9 @@ const FuelExpenses = () => {
 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 select-none">
-        <KPICard label="Total Spendings" value={`$${totalCost.toLocaleString()}`} color="amber" />
-        <KPICard label="Fuel Costs" value={`$${fuelCostSum.toLocaleString()}`} color="green" />
-        <KPICard label="Auxiliary Costs (Toll/Repairs)" value={`$${auxiliaryCostSum.toLocaleString()}`} color="blue" />
+        <KPICard label="Total Spendings" value={`₹${totalCost.toLocaleString('en-IN')}`} color="amber" />
+        <KPICard label="Fuel Costs" value={`₹${fuelCostSum.toLocaleString('en-IN')}`} color="green" />
+        <KPICard label="Auxiliary Costs (Toll/Repairs)" value={`₹${auxiliaryCostSum.toLocaleString('en-IN')}`} color="blue" />
       </div>
 
       {/* Financial Rule Warning */}
@@ -257,7 +257,7 @@ const FuelExpenses = () => {
           !
         </div>
         <p className="text-[12px] font-semibold text-[#EF4444] uppercase tracking-wider">
-          Financial Rule: Total Operational Cost = SUM(fuel.cost) + SUM(expenses where type=repair/maintenance).
+          Financial Rule: Total Operational Cost (₹) = SUM(fuel.cost) + SUM(expenses where type=repair/maintenance).
         </p>
       </div>
 
@@ -328,7 +328,7 @@ const FuelExpenses = () => {
               type="number"
             />
             <Input
-              label="Refill Spendings ($)"
+              label="Refill Spendings (₹)"
               name="cost"
               value={fuelValues.cost}
               onChange={handleFuelChange}
@@ -403,7 +403,7 @@ const FuelExpenses = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Charged Amount ($)"
+              label="Charged Amount (₹)"
               name="cost"
               value={expenseValues.cost}
               onChange={handleExpenseChange}

@@ -112,7 +112,7 @@ const Maintenance = () => {
       } 
     },
     { key: "serviceType", label: "Service Description" },
-    { key: "cost", label: "Cost ($)", render: (row) => <span className="font-mono">${row.cost.toLocaleString()}</span> },
+    { key: "cost", label: "Cost (₹)", render: (row) => <span className="font-mono">₹{row.cost.toLocaleString('en-IN')}</span> },
     { key: "date", label: "Date Scheduled", render: (row) => <span className="font-mono">{row.date}</span> },
     { key: "status", label: "Log Status", render: (row) => <StatusBadge status={row.status} /> }
   ];
@@ -140,7 +140,7 @@ const Maintenance = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <KPICard label="Total Repairs Logged" value={logs.length} color="amber" />
         <KPICard label="Active In Shop" value={activeLogsCount} color="orange" />
-        <KPICard label="Total Fleet Spendings" value={`$${totalCostMaintenance.toLocaleString()}`} color="red" />
+        <KPICard label="Total Fleet Spendings" value={`₹${totalCostMaintenance.toLocaleString('en-IN')}`} color="red" />
       </div>
 
       {/* Tab Selectors */}
@@ -366,7 +366,7 @@ const Maintenance = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Estimated Cost ($)"
+              label="Estimated Cost (₹)"
               name="cost"
               value={formValues.cost}
               onChange={handleInputChange}
@@ -463,7 +463,7 @@ const Maintenance = () => {
                     {/* Cost */}
                     <div className="bg-card p-3.5 rounded-lg border border-default">
                       <span className="text-[9px] font-bold uppercase tracking-wider text-muted">Cost</span>
-                      <span className="font-mono font-bold mt-1 block text-sm">${selectedLogObj.cost.toLocaleString()}</span>
+                      <span className="font-mono font-bold mt-1 block text-sm">₹{selectedLogObj.cost.toLocaleString('en-IN')}</span>
                     </div>
                     {/* Date */}
                     <div className="bg-card p-3.5 rounded-lg border border-default">

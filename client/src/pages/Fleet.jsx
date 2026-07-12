@@ -167,7 +167,7 @@ const Fleet = () => {
     { key: "type", label: "Type" },
     { key: "maxLoadCapacity", label: "Max Load (kg)", render: (row) => <span className="font-mono">{row.maxLoadCapacity.toLocaleString()} kg</span> },
     { key: "odometer", label: "Odometer", render: (row) => <span className="font-mono">{row.odometer.toLocaleString()} km</span> },
-    { key: "acquisitionCost", label: "Acquisition Cost", render: (row) => <span className="font-mono">${row.acquisitionCost.toLocaleString()}</span> },
+    { key: "acquisitionCost", label: "Acquisition Cost", render: (row) => <span className="font-mono">₹{row.acquisitionCost.toLocaleString('en-IN')}</span> },
     { key: "status", label: "Status", render: (row) => <StatusBadge status={row.status} /> }
   ];
 
@@ -358,7 +358,7 @@ const Fleet = () => {
           </div>
 
           <Input
-            label="Acquisition Cost ($)"
+            label="Acquisition Cost (₹)"
             name="acquisitionCost"
             value={formValues.acquisitionCost}
             onChange={handleInputChange}
@@ -471,19 +471,19 @@ const Fleet = () => {
                           <div className="space-y-0.5">
                             <span className="text-[8px] font-bold text-muted uppercase tracking-wider block">Est. Revenue</span>
                             <span className="font-mono text-xs font-bold text-[#51e77b]">
-                              +${(healthInfo.lifetimeCost + healthInfo.profit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              +₹{(healthInfo.lifetimeCost + healthInfo.profit).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           </div>
                           <div className="space-y-0.5">
                             <span className="text-[8px] font-bold text-muted uppercase tracking-wider block">Fuel & Service Cost</span>
                             <span className="font-mono text-xs font-bold text-[#ffb4ab]">
-                              -${healthInfo.lifetimeCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              -₹{healthInfo.lifetimeCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           </div>
                           <div className="space-y-0.5 col-span-2 pt-1.5 border-t border-default/35 flex justify-between items-center">
                             <span className="text-[8px] font-bold text-muted uppercase tracking-wider">Net Operating Profit</span>
                             <span className={`font-mono text-xs font-black ${healthInfo.profit >= 0 ? 'text-[#51e77b]' : 'text-status-retired'}`}>
-                              {healthInfo.profit >= 0 ? '+' : ''}${healthInfo.profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              {healthInfo.profit >= 0 ? '+' : ''}₹{healthInfo.profit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           </div>
                         </div>
@@ -504,7 +504,7 @@ const Fleet = () => {
                   </div>
                   <div className="text-center">
                     <p className="text-[10px] text-muted uppercase font-bold tracking-wider">Acq. Cost</p>
-                    <p className="font-mono text-sm font-semibold mt-1">${selectedVehicle.acquisitionCost.toLocaleString()}</p>
+                    <p className="font-mono text-sm font-semibold mt-1">₹{selectedVehicle.acquisitionCost.toLocaleString('en-IN')}</p>
                   </div>
                 </div>
 
@@ -550,7 +550,7 @@ const Fleet = () => {
                           <div>
                             <div className="font-semibold text-primary">{record.serviceType}</div>
                             <span className="text-muted text-[10px] mt-1 flex items-center gap-2">
-                              <Calendar size={10} /> {record.date} | <DollarSign size={10} /> {record.cost.toLocaleString()}
+                              <Calendar size={10} /> {record.date} | <DollarSign size={10} /> ₹{record.cost.toLocaleString('en-IN')}
                             </span>
                           </div>
                           <StatusBadge status={record.status} />

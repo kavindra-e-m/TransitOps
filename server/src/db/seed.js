@@ -30,14 +30,14 @@ const seedData = () => {
 
   // Insert Vehicles
   const insertVehicle = db.prepare('INSERT INTO vehicles (reg_no, name, type, capacity, odometer, acquisition_cost, status) VALUES (?, ?, ?, ?, ?, ?, ?)');
-  const v1 = insertVehicle.run('VAN-05', 'Ford Transit', 'Van', 1500, 12000, 35000, 'Available').lastInsertRowid;
-  const v2 = insertVehicle.run('TRK-10', 'Volvo FH16', 'Truck', 15000, 45000, 120000, 'On Trip').lastInsertRowid;
-  const v3 = insertVehicle.run('VAN-08', 'Mercedes Sprinter', 'Van', 1800, 8500, 40000, 'In Shop').lastInsertRowid;
+  const v1 = insertVehicle.run('VAN-05', 'Ford Transit', 'Van', 1500, 12000, 2900000, 'Available').lastInsertRowid;
+  const v2 = insertVehicle.run('TRK-10', 'Volvo FH16', 'Truck', 15000, 45000, 9900000, 'On Trip').lastInsertRowid;
+  const v3 = insertVehicle.run('VAN-08', 'Mercedes Sprinter', 'Van', 1800, 8500, 3300000, 'In Shop').lastInsertRowid;
 
   // Insert Drivers
   const insertDriver = db.prepare('INSERT INTO drivers (name, license_no, license_category, license_expiry, contact, status) VALUES (?, ?, ?, ?, ?, ?)');
   const d1 = insertDriver.run('Alex Mercer', 'LIC-1234', 'Class B', '2028-12-31', '555-0101', 'Available').lastInsertRowid;
-  const d2 = insertDriver.run('John Doe', 'LIC-9999', 'Class A', '2025-03-01', '555-0102', 'Available').lastInsertRowid; // Expired
+  const d2 = insertDriver.run('John Doe', 'LIC-9999', 'Class A', '2025-03-01', '555-0102', 'Suspended').lastInsertRowid; // Expired license
   const d3 = insertDriver.run('Sarah Connor', 'LIC-5678', 'Class A', '2027-06-15', '555-0103', 'On Trip').lastInsertRowid;
 
   // Insert Trips
@@ -48,18 +48,18 @@ const seedData = () => {
 
   // Insert Maintenance
   const insertMaintenance = db.prepare('INSERT INTO maintenance_logs (vehicle_id, service_type, cost, date, status) VALUES (?, ?, ?, ?, ?)');
-  insertMaintenance.run(v3, 'Engine Tune-up', 450, '2026-07-11', 'In Progress');
-  insertMaintenance.run(v1, 'Oil Change', 80, '2026-06-15', 'Completed');
+  insertMaintenance.run(v3, 'Engine Tune-up', 37500, '2026-07-11', 'In Progress');
+  insertMaintenance.run(v1, 'Oil Change', 6600, '2026-06-15', 'Completed');
 
   // Insert Fuel
   const insertFuel = db.prepare('INSERT INTO fuel_logs (vehicle_id, liters, cost, date, odometer_at_fill) VALUES (?, ?, ?, ?, ?)');
-  insertFuel.run(v1, 50, 75, '2026-07-01', 11000);
-  insertFuel.run(v2, 200, 300, '2026-07-05', 44500);
+  insertFuel.run(v1, 50, 6250, '2026-07-01', 11000);
+  insertFuel.run(v2, 200, 25000, '2026-07-05', 44500);
 
   // Insert Expense
   const insertExpense = db.prepare('INSERT INTO expenses (category, description, cost, date, related_vehicle_id) VALUES (?, ?, ?, ?, ?)');
-  insertExpense.run('Toll', 'Highway 5 toll', 15, '2026-07-06', v2);
-  insertExpense.run('Software', 'Fleet Management Sub', 200, '2026-07-01', null);
+  insertExpense.run('Toll', 'Highway 5 toll', 1250, '2026-07-06', v2);
+  insertExpense.run('Software', 'Fleet Management Sub', 16600, '2026-07-01', null);
 
   console.log('Database seeded successfully.');
 };
