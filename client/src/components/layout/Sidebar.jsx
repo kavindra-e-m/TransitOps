@@ -3,12 +3,13 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Truck, Users, Route, Wrench,
-  Fuel, BarChart2, Settings, HelpCircle, AlertOctagon
+  Fuel, BarChart2, Settings, HelpCircle, AlertOctagon, Map
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const NAV = [
   { to: '/dashboard', label: 'Fleet Overview', icon: LayoutDashboard },
+  { to: '/map', label: 'Fleet Map', icon: Map },
   { to: '/fleet', label: 'Fleet Registry', icon: Truck },
   { to: '/drivers', label: 'Drivers Registry', icon: Users },
   { to: '/trips', label: 'Route Optimizer', icon: Route },
