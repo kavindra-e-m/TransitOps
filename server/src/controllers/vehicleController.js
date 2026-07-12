@@ -69,3 +69,27 @@ exports.getHistory = (req, res) => {
   const maintenance = db.prepare('SELECT * FROM maintenance_logs WHERE vehicle_id = ? ORDER BY date DESC').all(id);
   res.json({ trips, maintenance });
 };
+
+exports.delete = (req, res) => {
+  const { id } = req.params;
+  try {
+    // Check if vehicle has active dispatched trips
+    const activeTrips = db.prepare("SELECT id FROM trips WHERE vehicle_id = ? AND status = 'Dispatched'").get(id);
+    if (activeTrips) {
+      return res.status(400).json({ error: 'Cannot delete vehicle with active dispatched trips.' });
+    }
+
+    // Check if vehicle is in active maintenance
+    const activeMaint = db.prepare("SELECT id FROM maintenance_logs WHERE vehicle_id = ? AND status IN ('Scheduled', 'In Progress')").get(id);
+    if (activeMaint) {
+      return res.status(400).json({ error: 'Cannot delete vehicle currently in maintenance.' });
+    }
+
+    db.prepare('DELETE FROM vehicles WHERE id = ?').run(id);
+    const io = req.app.get('io');
+    io.emit('telemetry_update', { type: 'VEHICLE_DELETED', payload: { id: Number(id) } });
+    res.json({ message: 'Vehicle deleted successfully.', id: Number(id) });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete vehicle.' });
+  }
+};

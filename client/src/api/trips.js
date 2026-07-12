@@ -20,8 +20,8 @@ export const dispatchTripAPI = (id) => {
   return client.patch(`/trips/${id}/dispatch`).then(res => res.data);
 };
 
-export const completeTripAPI = (id) => {
-  return client.patch(`/trips/${id}/complete`).then(res => res.data);
+export const completeTripAPI = (id, data = {}) => {
+  return client.patch(`/trips/${id}/complete`, data).then(res => res.data);
 };
 
 export const cancelTripAPI = (id) => {

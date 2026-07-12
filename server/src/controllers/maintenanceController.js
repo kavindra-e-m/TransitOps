@@ -14,7 +14,7 @@ exports.create = (req, res) => {
     if (['Scheduled', 'In Progress'].includes(status || 'Scheduled')) {
       db.prepare("UPDATE vehicles SET status = 'In Shop' WHERE id = ?").run(vehicle_id);
     } else if (status === 'Completed') {
-      db.prepare("UPDATE vehicles SET status = 'Available' WHERE id = ?").run(vehicle_id);
+      db.prepare("UPDATE vehicles SET status = 'Available' WHERE id = ? AND status != 'Retired'").run(vehicle_id);
     }
 
     return db.prepare('SELECT * FROM maintenance_logs WHERE id = ?').get(info.lastInsertRowid);
@@ -49,7 +49,7 @@ exports.updateStatus = (req, res) => {
     if (['Scheduled', 'In Progress'].includes(status)) {
       db.prepare("UPDATE vehicles SET status = 'In Shop' WHERE id = ?").run(log.vehicle_id);
     } else if (status === 'Completed') {
-      db.prepare("UPDATE vehicles SET status = 'Available' WHERE id = ?").run(log.vehicle_id);
+      db.prepare("UPDATE vehicles SET status = 'Available' WHERE id = ? AND status != 'Retired'").run(log.vehicle_id);
     }
 
     return db.prepare('SELECT * FROM maintenance_logs WHERE id = ?').get(id);
