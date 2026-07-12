@@ -10,7 +10,7 @@ const FleetUtilizationChart = ({ utilization = 0 }) => {
 
   return (
     <div className="bg-card p-6 rounded-xl border border-default space-y-4 select-none">
-      <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary border-b border-default pb-3 flex items-center gap-2">
+      <h3 className="text-sm font-bold uppercase tracking-wider text-primary border-b border-default pb-3 flex items-center gap-2">
         <Activity size={16} className="text-accent" />
         Fleet Utilization
       </h3>
@@ -40,8 +40,8 @@ const FleetUtilizationChart = ({ utilization = 0 }) => {
 
         {/* Center label */}
         <div className="absolute flex flex-col items-center pointer-events-none">
-          <span className="font-mono text-2xl font-bold text-text-primary">{pct}%</span>
-          <span className="text-[10px] text-text-muted uppercase tracking-wider mt-0.5">Utilization</span>
+          <span className="font-mono text-2xl font-bold text-primary">{pct}%</span>
+          <span className="text-[10px] text-muted uppercase tracking-wider mt-0.5">Utilization</span>
         </div>
       </div>
     </div>

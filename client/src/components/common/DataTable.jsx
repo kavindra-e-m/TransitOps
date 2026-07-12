@@ -67,19 +67,19 @@ const DataTable = ({ columns, data = [], onRowClick, emptyMessage = "No data ava
     <div className="w-full overflow-x-auto rounded-xl border border-default bg-card select-none">
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="border-b border-default bg-bg-primary/40">
+          <tr className="border-b border-default bg-primary/40">
             {columns.map((col) => {
               const isSorted = sortConfig.key === col.key;
               return (
                 <th
                   key={col.key}
                   onClick={() => handleSort(col.key)}
-                  className="table-header-custom p-4 font-medium uppercase tracking-wider text-[11px] text-text-secondary select-none cursor-pointer group hover:text-text-primary transition-colors"
+                  className="table-header-custom p-4 font-medium uppercase tracking-wider text-[11px] text-secondary select-none cursor-pointer group hover:text-primary transition-colors"
                   style={{ width: col.width }}
                 >
                   <div className="flex items-center gap-1.5">
                     {col.label}
-                    <span className="text-text-muted group-hover:text-text-secondary transition-colors duration-150">
+                    <span className="text-muted group-hover:text-secondary transition-colors duration-150">
                       {isSorted ? (
                         sortConfig.direction === 'asc' ? (
                           <ChevronUp size={14} className="text-accent" />
@@ -112,7 +112,7 @@ const DataTable = ({ columns, data = [], onRowClick, emptyMessage = "No data ava
                 className={`transition-colors duration-150 hover:bg-card-hover group ${onRowClick ? 'cursor-pointer' : ''}`}
               >
                 {columns.map((col) => (
-                  <td key={col.key} className="p-4 text-sm text-text-primary font-sans">
+                  <td key={col.key} className="p-4 text-sm text-primary font-sans">
                     {col.render ? col.render(row) : (
                       <span className={typeof row[col.key] === 'number' ? 'font-mono' : ''}>
                         {row[col.key] !== undefined && row[col.key] !== null ? String(row[col.key]) : '—'}
@@ -124,7 +124,7 @@ const DataTable = ({ columns, data = [], onRowClick, emptyMessage = "No data ava
             ))
           ) : (
             <tr>
-              <td colSpan={columns.length} className="p-8 text-center text-sm text-text-muted font-sans">
+              <td colSpan={columns.length} className="p-8 text-center text-sm text-muted font-sans">
                 {emptyMessage}
               </td>
             </tr>

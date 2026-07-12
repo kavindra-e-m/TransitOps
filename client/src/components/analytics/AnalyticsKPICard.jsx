@@ -53,7 +53,7 @@ const AnalyticsKPICard = ({
       `}
     >
       {/* Top row — label + icon */}
-      <div className="flex items-center justify-between text-text-secondary">
+      <div className="flex items-center justify-between text-secondary">
         <span className="text-[10px] font-bold uppercase tracking-wider">
           {label}
         </span>
@@ -65,9 +65,9 @@ const AnalyticsKPICard = ({
       </div>
 
       {/* Value row */}
-      <h3 className="font-mono text-2xl font-bold text-text-primary mt-2 flex items-baseline gap-1">
+      <h3 className="font-mono text-2xl font-bold text-primary mt-2 flex items-baseline gap-1">
         {prefix && (
-          <span className="text-xl font-sans text-text-secondary">
+          <span className="text-xl font-sans text-secondary">
             {prefix}
           </span>
         )}
@@ -85,7 +85,7 @@ const AnalyticsKPICard = ({
         )}
 
         {suffix && (
-          <span className="text-xs font-sans font-medium text-text-muted">
+          <span className="text-xs font-sans font-medium text-muted">
             {suffix}
           </span>
         )}
@@ -93,7 +93,7 @@ const AnalyticsKPICard = ({
 
       {/* Formula subtitle — only rendered when formula prop is provided */}
       {formula && (
-        <p className="text-[10px] text-text-muted mt-2 font-medium italic border-t border-default/40 pt-2">
+        <p className="text-[10px] text-muted mt-2 font-medium italic border-t border-default/40 pt-2">
           {formula}
         </p>
       )}

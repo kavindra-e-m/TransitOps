@@ -5,7 +5,7 @@ const Input = forwardRef(({ label, value, onChange, error = "", type = "text", c
   return (
     <div className={`flex flex-col gap-1.5 w-full ${className}`}>
       {label && (
-        <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary select-none">
+        <label className="text-xs font-semibold uppercase tracking-wider text-secondary select-none">
           {label}
         </label>
       )}
@@ -19,10 +19,10 @@ const Input = forwardRef(({ label, value, onChange, error = "", type = "text", c
           type={type}
           value={value}
           onChange={onChange}
-          className={`w-full px-3 py-2 bg-input text-text-primary rounded-lg border focus:outline-none transition-all duration-200 
+          className={`w-full px-3 py-2 bg-input text-primary rounded-lg border focus:outline-none transition-all duration-200 
             ${error 
               ? 'border-status-retired focus:border-status-retired' 
-              : 'border-default focus:border-border-focus focus:ring-1 focus:ring-accent/20'
+              : 'border-default focus:border-focus focus:ring-1 focus:ring-accent/20'
             }
             input-glow-focus
           `}
