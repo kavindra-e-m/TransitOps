@@ -19,7 +19,7 @@ export const exportAnalyticsCSV = (summary, monthlyRevenue = [], costliestVehicl
     csv += `KPI,Operational Cost,$${summary.operationalCost.toFixed(2)},"Fuel + Maintenance + Expenses"\n`;
     csv += `KPI,Vehicle ROI,${(summary.vehicleROI * 100).toFixed(1)}%,"ROI = (Revenue - (Maint + Fuel)) / Acq Cost"\n`;
 
-    csv += '\nMonthly Revenue Records\nMonth,Revenue ($)\n';
+    csv += '\nMonthly Operational Spend\nMonth,Spend ($)\n';
     monthlyRevenue.forEach(r => { csv += `${r.month},${r.revenue}\n`; });
 
     csv += '\nTop Costliest Vehicles\nRegistration Number,Total Operational Cost ($)\n';

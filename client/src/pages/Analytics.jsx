@@ -147,7 +147,7 @@ const Analytics = () => {
         <div className="lg:col-span-7 bg-card p-6 rounded-xl border border-default space-y-4">
           <h3 className="text-sm font-bold uppercase tracking-wider text-primary border-b border-default pb-3 flex items-center gap-2">
             <TrendingUp size={16} className="text-accent" />
-            Monthly Revenue Trends
+            Monthly Operational Spend
           </h3>
           
           <div className="h-64 w-full">
