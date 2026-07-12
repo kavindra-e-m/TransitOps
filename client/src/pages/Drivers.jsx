@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { ShieldAlert, Check, X, AlertTriangle, Trophy, LayoutList, Award } from 'lucide-react';
+import { ShieldAlert, Check, X, AlertTriangle, Trophy, LayoutList, Award, Clock } from 'lucide-react';
 
 import { useDrivers, useAppActions } from '../context/AppContext';
-import { calculateSafetyRank } from '../utils/insights';
+import { calculateSafetyRank, getLicenseExpiryTier } from '../utils/insights';
 import KPICard from '../components/common/KPICard';
 import StatusBadge from '../components/common/StatusBadge';
 import DataTable from '../components/common/DataTable';
@@ -140,11 +140,19 @@ const Drivers = () => {
       key: "licenseExpiryDate",
       label: "Expiry Date",
       render: (row) => {
-        const expired = isLicenseExpired(row.licenseExpiryDate);
+        const { tier, daysLeft } = getLicenseExpiryTier(row.licenseExpiryDate);
+        const tierConfig = {
+          ok:       { cls: 'text-status-available/75', icon: null, badge: null },
+          warn:     { cls: 'text-yellow-400 font-medium', icon: null, badge: null },
+          critical: { cls: 'text-[#F97316] font-bold', icon: <Clock size={12} className="text-[#F97316] shrink-0" />, badge: <span className="text-[8px] bg-[#F97316]/10 border border-[#F97316]/25 text-[#F97316] px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest">{daysLeft} days left</span> },
+          expired:  { cls: 'text-[#ffb4ab] font-bold line-through', icon: <AlertTriangle size={12} className="text-[#ffb4ab] shrink-0 animate-bounce" />, badge: <span className="text-[8px] bg-[#ffb4ab]/10 border border-[#ffb4ab]/25 text-[#ffb4ab] px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest">EXPIRED</span> },
+        };
+        const cfg = tierConfig[tier];
         return (
-          <span className={`font-mono flex items-center gap-1.5 ${expired ? 'text-status-retired font-semibold' : ''}`}>
+          <span className={`font-mono flex items-center gap-1.5 ${cfg.cls}`}>
+            {cfg.icon}
             {row.licenseExpiryDate}
-            {expired && <AlertTriangle size={12} className="text-status-retired shrink-0 animate-bounce" />}
+            {cfg.badge}
           </span>
         );
       }

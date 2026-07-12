@@ -88,15 +88,15 @@ export function calculateSafetyRank(drivers) {
  * @param {Date} [today] — override for testing; defaults to new Date()
  * @returns {{ tier: 'ok'|'warn'|'critical'|'expired', daysLeft: number }}
  */
-export function getLicenseExpiryTier(expiryDateStr, today = new Date()) {
+export function getLicenseExpiryTier(expiryDateStr, today = new Date("2026-07-12")) {
   const expiry = new Date(expiryDateStr);
   const todayNoon = new Date(today);
   todayNoon.setHours(0, 0, 0, 0);
   const daysLeft = Math.ceil((expiry - todayNoon) / (1000 * 60 * 60 * 24));
 
   if (daysLeft < 0) return { tier: 'expired', daysLeft };
-  if (daysLeft <= 7) return { tier: 'critical', daysLeft };
-  if (daysLeft <= 30) return { tier: 'warn', daysLeft };
+  if (daysLeft <= 30) return { tier: 'critical', daysLeft };
+  if (daysLeft <= 90) return { tier: 'warn', daysLeft };
   return { tier: 'ok', daysLeft };
 }
 

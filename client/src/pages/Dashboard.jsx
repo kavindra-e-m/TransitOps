@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useVehicles, useDrivers, useTrips, useIsLive } from '../context/AppContext';
 import StatusBadge from '../components/common/StatusBadge';
+import { getLicenseAlertDrivers } from '../utils/insights';
 import { 
   TrendingUp, TrendingDown, CheckCircle, Leaf, AlertTriangle, 
-  MapPin, Clock, ShieldCheck, Zap, ChevronRight, Play, CheckSquare, XCircle
+  MapPin, Clock, ShieldCheck, Zap, ChevronRight, Play, CheckSquare, XCircle, ShieldAlert
 } from 'lucide-react';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const allVehicles = useVehicles();
   const allDrivers = useDrivers();
   const allTrips = useTrips();
@@ -214,6 +217,53 @@ const Dashboard = () => {
         {/* RIGHT COLUMN: ALERTS & DISPATCHER PERFORMANCE (col-span-3) */}
         <div className="col-span-12 lg:col-span-3 flex flex-col gap-6">
           
+          {/* Credentials Risk Card */}
+          <div className="bg-card border border-outline-variant rounded-xl flex flex-col p-4 space-y-3">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-text-primary flex items-center gap-2">
+                <ShieldAlert size={15} className="text-[#ffb4ab]" />
+                Credentials Risk
+              </h3>
+              {getLicenseAlertDrivers(allDrivers).length > 0 && (
+                <span className="bg-[#ffb4ab]/15 border border-[#ffb4ab]/30 text-[#ffb4ab] px-2 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase">
+                  {getLicenseAlertDrivers(allDrivers).length} Action
+                </span>
+              )}
+            </div>
+            
+            <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+              {getLicenseAlertDrivers(allDrivers).map((driver) => {
+                const isExpired = driver.expiryInfo.tier === 'expired';
+                return (
+                  <div
+                    key={driver.id}
+                    onClick={() => navigate('/drivers')}
+                    className="p-2.5 rounded border border-default/40 hover:border-accent bg-[#0B0E14]/45 hover:bg-[#0B0E14]/75 transition-all cursor-pointer flex justify-between items-center group"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-text-primary group-hover:text-accent truncate">{driver.name}</p>
+                      <p className="text-[10px] text-text-muted font-mono mt-0.5">Expires: {driver.licenseExpiryDate}</p>
+                    </div>
+                    {isExpired ? (
+                      <span className="text-[8px] bg-status-retired/10 border border-status-retired/25 text-status-retired px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest animate-pulse">
+                        Expired
+                      </span>
+                    ) : (
+                      <span className="text-[8px] bg-[#F97316]/10 border border-[#F97316]/25 text-[#F97316] px-1.5 py-0.5 rounded-full font-black uppercase tracking-widest">
+                        {driver.expiryInfo.daysLeft}d left
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+              {getLicenseAlertDrivers(allDrivers).length === 0 && (
+                <div className="text-center py-6 text-xs text-text-muted select-none">
+                  All credentials up to date.
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Alerts Panel */}
           <div className="bg-card border border-outline-variant rounded-xl flex-1 flex flex-col min-h-[450px]">
             <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-card-hover/20">
