@@ -9,6 +9,7 @@ const rbac = require('../middleware/rbac');
 router.use(auth);
 
 router.get('/', vehicleController.getAll);
+router.get('/location', vehicleController.getLocations);
 router.get('/check-reg/:regNo', vehicleController.checkReg);
 
 const vehicleValidation = [
