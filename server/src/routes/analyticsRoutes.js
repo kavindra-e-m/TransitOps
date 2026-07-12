@@ -1,1 +1,13 @@
-const express = require('express'); const router = express.Router(); router.get('/summary', (req, res) => res.json({ fuelEfficiency: 12.5, fleetUtilization: 85, operationalCost: 1500, vehicleROI: 0.15, formulaFields: { revenue: 5000, maintenance: 450, fuel: 375, acquisitionCost: 35000 } })); router.get('/monthly-revenue', (req, res) => res.json([{ month: 'Jan', revenue: 1000 }, { month: 'Feb', revenue: 1200 }])); router.get('/top-costliest-vehicles', (req, res) => res.json([{ vehicle_id: 2, reg_no: 'TRK-10', totalCost: 300 }])); module.exports = router;
+const express = require('express');
+const router = express.Router();
+const analyticsController = require('../controllers/analyticsController');
+const auth = require('../middleware/auth');
+const rbac = require('../middleware/rbac');
+
+router.use(auth);
+
+router.get('/summary', rbac('Fleet Manager', 'Financial Analyst'), analyticsController.getSummary);
+router.get('/monthly-revenue', rbac('Fleet Manager', 'Financial Analyst'), analyticsController.getMonthlyRevenue);
+router.get('/top-costliest-vehicles', rbac('Fleet Manager', 'Financial Analyst'), analyticsController.getTopCostliestVehicles);
+
+module.exports = router;
