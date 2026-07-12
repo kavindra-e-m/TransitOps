@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { loginAPI } from '../api/auth';
+import { loginAPI, signupAPI } from '../api/auth';
 import { setClientToken } from '../api/client';
 
 const AuthContext = createContext();
@@ -8,6 +8,10 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [token, setToken] = useState(null);
+
+  const signup = async (name, email, password, role) => {
+    await signupAPI(name, email, password, role);
+  };
 
   const login = async (email, password, selectedRole) => {
     const res = await loginAPI(email, password);
@@ -31,7 +35,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, token, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, role, token, login, signup, logout, isAuthenticated: !!token }}>
       {children}
     </AuthContext.Provider>
   );
