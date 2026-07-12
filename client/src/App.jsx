@@ -21,11 +21,11 @@ import Settings from './pages/Settings';
 import FleetMap from './pages/FleetMap';
 
 const AppShell = ({ children }) => (
-  <div className="flex min-h-screen bg-primary">
+  <div className="flex min-h-screen bg-primary bg-dot-grid">
     <Sidebar />
-    <div className="flex-1 ml-60 flex flex-col">
+    <div className="flex-1 flex flex-col" style={{ marginLeft: 252 }}>
       <Topbar />
-      <main className="flex-1 mt-16">
+      <main className="flex-1 mt-14">
         {children}
       </main>
     </div>
