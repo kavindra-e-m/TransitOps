@@ -22,6 +22,21 @@
   --status-draft: #32353c;
 }
 
+:root.light-mode {
+  --bg-primary: #F3F4F6;
+  --bg-sidebar: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F9FAFB;
+  --bg-input: #FFFFFF;
+  --border-default: #E5E7EB;
+  --border-focus: #F59E0B;
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
+  --text-muted: #6B7280;
+  --accent: #F59E0B;
+  --accent-hover: #D97706;
+}
+
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
