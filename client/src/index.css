@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #0B0E14;
+  --bg-sidebar: #0D1117;
+  --bg-card: #131826;
+  --bg-card-hover: #171E2E;
+  --bg-input: #0F1420;
+  --border-default: #1F2937;
+  --border-focus: #F59E0B;
+  --text-primary: #F9FAFB;
+  --text-secondary: #9CA3AF;
+  --text-muted: #6B7280;
+  --accent: #F59E0B;
+  --accent-hover: #D97706;
+  --status-available: #22C55E;
+  --status-ontrip: #3B82F6;
+  --status-shop: #F97316;
+  --status-retired: #EF4444;
+  --status-draft: #6B7280;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Table header spec */
+.table-header-custom {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+}
+
+/* KPI numbers spec */
+.kpi-value-custom {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 32px;
+}
+
+/* Pulse animation for Status Badges */
+@keyframes status-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.pulse-animation {
+  animation: status-pulse 2s infinite ease-in-out;
+}
+
+/* Glow Shadow for Active Inputs */
+.input-glow-focus:focus {
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+}
+
+/* Shake Animation for Invalid Inputs */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+.shake-animation {
+  animation: shake 0.4s ease-in-out;
+}
