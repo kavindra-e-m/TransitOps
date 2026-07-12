@@ -15,6 +15,10 @@ exports.create = (req, res) => {
     const info = insert.run(name, license_no, license_category, license_expiry, contact, 'Available');
     
     const newDriver = db.prepare('SELECT * FROM drivers WHERE id = ?').get(info.lastInsertRowid);
+    
+    const io = req.app.get('io');
+    io.emit('telemetry_update', { type: 'DRIVER_UPDATED', payload: newDriver });
+
     res.status(201).json(newDriver);
   } catch (err) {
     res.status(500).json({ error: 'Failed to create driver.' });
@@ -29,6 +33,10 @@ exports.update = (req, res) => {
     update.run(name, license_category, license_expiry, contact, id);
     const updated = db.prepare('SELECT * FROM drivers WHERE id = ?').get(id);
     if (!updated) return res.status(404).json({ error: 'Driver not found' });
+
+    const io = req.app.get('io');
+    io.emit('telemetry_update', { type: 'DRIVER_UPDATED', payload: updated });
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: 'Failed to update driver.' });
@@ -50,8 +58,13 @@ exports.updateStatus = (req, res) => {
 
     db.prepare('UPDATE drivers SET status = ? WHERE id = ?').run(status, id);
     const updated = db.prepare('SELECT * FROM drivers WHERE id = ?').get(id);
+
+    const io = req.app.get('io');
+    io.emit('telemetry_update', { type: 'DRIVER_UPDATED', payload: updated });
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: 'Failed to update status.' });
   }
 };
+

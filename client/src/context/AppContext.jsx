@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { getVehiclesAPI, createVehicleAPI, updateVehicleAPI } from '../api/vehicles';
 import { getDriversAPI, createDriverAPI, updateDriverAPI, updateDriverStatusAPI } from '../api/drivers';
@@ -16,6 +17,9 @@ export const AppProvider = ({ children }) => {
   const [maintenance, setMaintenance] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  
+  // Real-time Socket Live indicator state
+  const [isLive, setIsLive] = useState(false);
 
   // Normalize data helpers
   const normalizeVehicles = (data) => data.map(v => ({
@@ -109,16 +113,40 @@ export const AppProvider = ({ children }) => {
     }
   }, [isAuthenticated]);
 
-  // Initial Fetch & 20s Polling Setup
+  // Real-time WebSocket connection setup using Socket.io
   useEffect(() => {
     if (isAuthenticated) {
-      refreshAllData();
-      const interval = setInterval(() => {
+      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+      const socket = io(socketUrl, {
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000
+      });
+
+      socket.on('connect', () => {
+        setIsLive(true);
+        console.log("WebSocket connected. Setting live indicators.");
         refreshAllData();
-      }, 20000); // 20 seconds polling
-      return () => clearInterval(interval);
+      });
+
+      socket.on('disconnect', () => {
+        setIsLive(false);
+        console.log("WebSocket disconnected. Retrying connection...");
+      });
+
+      // Handle real-time updates pushed from Express Controllers
+      socket.on('telemetry_update', (event) => {
+        console.log(`Real-time telemetry event received: ${event.type}`, event.payload);
+        refreshAllData();
+      });
+
+      return () => {
+        socket.off('connect');
+        socket.off('disconnect');
+        socket.off('telemetry_update');
+        socket.disconnect();
+      };
     } else {
-      // Clear data on logout
+      setIsLive(false);
       setVehicles([]);
       setDrivers([]);
       setTrips([]);
@@ -250,6 +278,7 @@ export const AppProvider = ({ children }) => {
         maintenance,
         expenses,
         lastUpdated,
+        isLive,
         refreshAllData,
         addVehicle,
         updateVehicleStatus,
@@ -296,6 +325,12 @@ export const useExpenses = () => {
   const context = useContext(AppContext);
   if (!context) throw new Error("useExpenses must be used within AppProvider");
   return context.expenses;
+};
+
+export const useIsLive = () => {
+  const context = useContext(AppContext);
+  if (!context) throw new Error("useIsLive must be used within AppProvider");
+  return context.isLive;
 };
 
 export const useAppActions = () => {

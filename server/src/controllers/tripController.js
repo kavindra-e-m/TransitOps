@@ -60,6 +60,17 @@ exports.dispatch = (req, res) => {
 
   try {
     const result = dispatchTx(id);
+    const io = req.app.get('io');
+    io.emit('telemetry_update', {
+      type: 'TRIP_DISPATCHED',
+      payload: {
+        tripId: result.id,
+        vehicleId: result.vehicle_id,
+        driverId: result.driver_id,
+        newVehicleStatus: 'On Trip',
+        newDriverStatus: 'On Trip'
+      }
+    });
     res.json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -82,6 +93,17 @@ exports.complete = (req, res) => {
 
   try {
     const result = completeTx(id);
+    const io = req.app.get('io');
+    io.emit('telemetry_update', {
+      type: 'TRIP_COMPLETED',
+      payload: {
+        tripId: result.id,
+        vehicleId: result.vehicle_id,
+        driverId: result.driver_id,
+        newVehicleStatus: 'Available',
+        newDriverStatus: 'Available'
+      }
+    });
     res.json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -106,8 +128,20 @@ exports.cancel = (req, res) => {
 
   try {
     const result = cancelTx(id);
+    const io = req.app.get('io');
+    io.emit('telemetry_update', {
+      type: 'TRIP_CANCELLED',
+      payload: {
+        tripId: result.id,
+        vehicleId: result.vehicle_id,
+        driverId: result.driver_id,
+        newVehicleStatus: 'Available',
+        newDriverStatus: 'Available'
+      }
+    });
     res.json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 };
+

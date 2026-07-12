@@ -22,6 +22,14 @@ exports.create = (req, res) => {
 
   try {
     const result = maintenanceTx();
+    const io = req.app.get('io');
+    io.emit('telemetry_update', {
+      type: 'MAINTENANCE_CREATED',
+      payload: {
+        vehicleId: result.vehicle_id,
+        newVehicleStatus: ['Scheduled', 'In Progress'].includes(result.status) ? 'In Shop' : 'Available'
+      }
+    });
     res.status(201).json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to create maintenance log.' });
@@ -49,9 +57,18 @@ exports.updateStatus = (req, res) => {
 
   try {
     const result = updateTx();
+    const io = req.app.get('io');
+    io.emit('telemetry_update', {
+      type: 'MAINTENANCE_CLOSED',
+      payload: {
+        vehicleId: result.vehicle_id,
+        newVehicleStatus: result.status === 'Completed' ? 'Available' : 'In Shop'
+      }
+    });
     res.json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 };
+
 
