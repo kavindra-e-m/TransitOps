@@ -27,3 +27,31 @@ exports.create = (req, res) => {
     res.status(500).json({ error: 'Failed to create maintenance log.' });
   }
 };
+
+exports.updateStatus = (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  
+  const updateTx = db.transaction(() => {
+    const log = db.prepare('SELECT * FROM maintenance_logs WHERE id = ?').get(id);
+    if (!log) throw new Error('Maintenance log not found');
+
+    db.prepare('UPDATE maintenance_logs SET status = ? WHERE id = ?').run(status, id);
+
+    if (['Scheduled', 'In Progress'].includes(status)) {
+      db.prepare("UPDATE vehicles SET status = 'In Shop' WHERE id = ?").run(log.vehicle_id);
+    } else if (status === 'Completed') {
+      db.prepare("UPDATE vehicles SET status = 'Available' WHERE id = ?").run(log.vehicle_id);
+    }
+
+    return db.prepare('SELECT * FROM maintenance_logs WHERE id = ?').get(id);
+  });
+
+  try {
+    const result = updateTx();
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+

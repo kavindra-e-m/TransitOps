@@ -1,452 +1,546 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { Compass, User, Truck, Check, X, Play, ShieldAlert, ArrowRight, Calendar } from 'lucide-react';
+import { 
+  Plus, Route, MapPin, Compass, AlertTriangle, ShieldAlert,
+  ChevronRight, Calendar, User, Truck, HelpCircle
+} from 'lucide-react';
 
-import { useVehicles, useDrivers, useTrips, useAppActions } from '../context/AppContext';
+import { 
+  useVehicles, useDrivers, useTrips, useAppActions 
+} from '../context/AppContext';
+import KPICard from '../components/common/KPICard';
 import StatusBadge from '../components/common/StatusBadge';
+import DataTable from '../components/common/DataTable';
+import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 
-const CURRENT_DATE = new Date("2026-07-12");
+const STEP_INFOS = [
+  { step: 1, title: "Origin & Dest.", desc: "Route mapping" },
+  { step: 2, title: "Cargo & Load", desc: "Weight constraints" },
+  { step: 3, title: "Vehicle & Operator", desc: "Dispatch assignment" }
+];
 
 const Trips = () => {
   const vehicles = useVehicles();
   const drivers = useDrivers();
   const trips = useTrips();
+  
   const { dispatchTrip, completeTrip, cancelTrip } = useAppActions();
 
-  // Selection state for stepper tracking
-  const [selectedTripId, setSelectedTripId] = useState(trips[0]?.id || null);
+  // Selection states
+  const [selectedTripId, setSelectedTripId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Selected Trip detail
-  const selectedTrip = useMemo(() => {
-    return trips.find(t => t.id === selectedTripId) || trips[0] || null;
-  }, [trips, selectedTripId]);
-
-  // Form states
+  // Stepper Forms State
+  const [activeStep, setActiveStep] = useState(1);
   const [formValues, setFormValues] = useState({
     source: "",
     destination: "",
-    vehicleId: "",
-    driverId: "",
+    plannedDistance: "",
     cargoWeight: "",
-    plannedDistance: ""
+    vehicleId: "",
+    driverId: ""
   });
   const [formErrors, setFormErrors] = useState({});
 
-  // Dropdown filtering
+  // Filter list of available vehicles/drivers (only Available and unexpired)
   const availableVehicles = useMemo(() => {
     return vehicles.filter(v => v.status === 'Available');
   }, [vehicles]);
 
   const availableDrivers = useMemo(() => {
-    return drivers.filter(d => 
-      d.status === 'Available' && 
-      new Date(d.licenseExpiryDate) >= CURRENT_DATE
-    );
+    return drivers.filter(d => d.status === 'Available');
   }, [drivers]);
 
-  // Selected Vehicle for Live Validation
+  // Find selected objects inside the form
   const selectedVehicleObj = useMemo(() => {
-    return vehicles.find(v => v.id === formValues.vehicleId) || null;
+    return vehicles.find(v => v.id === Number(formValues.vehicleId)) || null;
   }, [vehicles, formValues.vehicleId]);
 
-  // Live Capacity Overload check
-  const isOverCapacity = useMemo(() => {
+  const selectedDriverObj = useMemo(() => {
+    return drivers.find(d => d.id === Number(formValues.driverId)) || null;
+  }, [drivers, formValues.driverId]);
+
+  // Capacity overload check
+  const isOverloaded = useMemo(() => {
     if (!selectedVehicleObj || !formValues.cargoWeight) return false;
     return Number(formValues.cargoWeight) > selectedVehicleObj.maxLoadCapacity;
   }, [selectedVehicleObj, formValues.cargoWeight]);
 
-  // Inputs Change Handler
+  // Validation functions
+  const validateStep = (step) => {
+    const errors = {};
+    if (step === 1) {
+      if (!formValues.source.trim()) errors.source = "Origin starting point is required";
+      if (!formValues.destination.trim()) errors.destination = "Destination is required";
+      if (!formValues.plannedDistance || isNaN(formValues.plannedDistance) || Number(formValues.plannedDistance) <= 0) {
+        errors.plannedDistance = "Must be a positive distance (km)";
+      }
+    }
+    if (step === 2) {
+      if (!formValues.cargoWeight || isNaN(formValues.cargoWeight) || Number(formValues.cargoWeight) <= 0) {
+        errors.cargoWeight = "Must be a positive cargo weight (kg)";
+      }
+    }
+    if (step === 3) {
+      if (!formValues.vehicleId) errors.vehicleId = "Please select an available vehicle";
+      if (!formValues.driverId) errors.driverId = "Please assign a driver";
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleNextStep = () => {
+    if (validateStep(activeStep)) {
+      setActiveStep(prev => prev + 1);
+    }
+  };
+
+  const handlePrevStep = () => {
+    setActiveStep(prev => prev - 1);
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormValues(prev => ({ ...prev, [name]: value }));
-    
-    // Clear error
-    if (formErrors[name]) {
-      setFormErrors(prev => ({ ...prev, [name]: "" }));
-    }
   };
 
-  // Submit Handler
-  const handleSubmit = (e) => {
+  // Submit dispatch action
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateStep(3)) return;
 
-    // Check errors
-    const errors = {};
-    if (!formValues.source.trim()) errors.source = "Source location is required";
-    if (!formValues.destination.trim()) errors.destination = "Destination is required";
-    if (!formValues.vehicleId) errors.vehicleId = "Select a vehicle";
-    if (!formValues.driverId) errors.driverId = "Select a driver";
-    if (!formValues.cargoWeight || isNaN(formValues.cargoWeight) || Number(formValues.cargoWeight) <= 0) {
-      errors.cargoWeight = "Enter a valid positive cargo weight";
-    }
-    if (!formValues.plannedDistance || isNaN(formValues.plannedDistance) || Number(formValues.plannedDistance) <= 0) {
-      errors.plannedDistance = "Enter a valid distance";
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      toast.error("Please complete the dispatch form.");
+    if (isOverloaded) {
+      toast.error("Cargo weight exceeds vehicle capacity constraint.");
       return;
     }
 
-    if (isOverCapacity) {
-      toast.error("Cannot dispatch: vehicle cargo limit exceeded.");
-      return;
+    try {
+      const dispatched = await dispatchTrip(formValues);
+      toast.success(`Trip T${String(dispatched.id).padStart(3, '0')} Dispatched successfully!`);
+      
+      // Reset form
+      setFormValues({
+        source: "",
+        destination: "",
+        plannedDistance: "",
+        cargoWeight: "",
+        vehicleId: "",
+        driverId: ""
+      });
+      setFormErrors({});
+      setActiveStep(1);
+      setIsModalOpen(false);
+    } catch {
+      // Interceptors handle toast
     }
-
-    // Call context dispatch action
-    const newTrip = dispatchTrip(formValues);
-    toast.success(`Trip T${newTrip.id.replace('T', '')} dispatched successfully!`);
-    
-    // Select new trip in stepper
-    setSelectedTripId(newTrip.id);
-
-    // Reset Form
-    setFormValues({
-      source: "",
-      destination: "",
-      vehicleId: "",
-      driverId: "",
-      cargoWeight: "",
-      plannedDistance: ""
-    });
   };
 
-  // Status Stepper configuration helper
-  const getStepperData = (status = 'Draft') => {
-    const s = status.toLowerCase();
-    
-    if (s === 'cancelled') {
-      return {
-        steps: ['Draft', 'Dispatched', 'Cancelled'],
-        activeStep: 2, // zero indexed
-        color: 'text-status-retired bg-status-retired',
-        lineColor: 'bg-status-retired'
-      };
-    }
+  // Table Column Definitions
+  const columns = [
+    { key: "id", label: "Trip ID", width: "10%" },
+    {
+      key: "route",
+      label: "Route Detail",
+      render: (row) => (
+        <div className="flex items-center gap-1.5 text-xs">
+          <span className="font-semibold text-text-primary">{row.source}</span>
+          <ChevronRight size={12} className="text-text-muted shrink-0" />
+          <span className="font-semibold text-text-primary">{row.destination}</span>
+        </div>
+      )
+    },
+    { key: "cargoWeight", label: "Cargo Load (kg)", render: (row) => <span className="font-mono">{row.cargoWeight.toLocaleString()} kg</span> },
+    { key: "plannedDistance", label: "Est. Distance", render: (row) => <span className="font-mono">{row.plannedDistance} km</span> },
+    {
+      key: "vehicleId",
+      label: "Assigned Vehicle",
+      render: (row) => {
+        const v = vehicles.find(veh => veh.id === Number(row.vehicleId));
+        return <span className="font-semibold font-mono">{v ? v.regNumber : row.vehicleId}</span>;
+      }
+    },
+    {
+      key: "driverId",
+      label: "Operator",
+      render: (row) => {
+        const d = drivers.find(drv => drv.id === Number(row.driverId));
+        return <span>{d ? d.name : row.driverId}</span>;
+      }
+    },
+    { key: "status", label: "Dispatch Status", render: (row) => <StatusBadge status={row.status} /> }
+  ];
 
-    const steps = ['Draft', 'Dispatched', 'Completed'];
-    let activeStep = 0;
-    let color = 'text-accent bg-accent';
-    let lineColor = 'bg-accent';
+  // Selected Trip detail mappings
+  const selectedTripObj = useMemo(() => {
+    return trips.find(t => t.id === selectedTripId) || null;
+  }, [trips, selectedTripId]);
 
-    if (s === 'dispatched') {
-      activeStep = 1;
-      color = 'text-[#3B82F6] bg-[#3B82F6]';
-      lineColor = 'bg-[#3B82F6]';
-    } else if (s === 'completed') {
-      activeStep = 2;
-      color = 'text-[#22C55E] bg-[#22C55E]';
-      lineColor = 'bg-[#22C55E]';
-    }
+  const detailVehicleObj = useMemo(() => {
+    if (!selectedTripObj) return null;
+    return vehicles.find(v => v.id === Number(selectedTripObj.vehicleId)) || null;
+  }, [vehicles, selectedTripObj]);
 
-    return { steps, activeStep, color, lineColor };
-  };
+  const detailDriverObj = useMemo(() => {
+    if (!selectedTripObj) return null;
+    return drivers.find(d => d.id === Number(selectedTripObj.driverId)) || null;
+  }, [drivers, selectedTripObj]);
 
-  const stepper = useMemo(() => {
-    return getStepperData(selectedTrip?.status);
-  }, [selectedTrip]);
+  // KPI calculations
+  const totalTripsCount = trips.length;
+  const activeDispatchedCount = trips.filter(t => t.status === "Dispatched").length;
+  const completedTripsCount = trips.filter(t => t.status === "Completed").length;
+  const cancelledTripsCount = trips.filter(t => t.status === "Cancelled").length;
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h2 className="text-xl font-bold text-text-primary">Trip Dispatcher</h2>
-        <p className="text-xs text-text-secondary">Plan new dispatches, validate weights, and manage active logistics boards.</p>
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-text-primary">Dispatches & Routes</h2>
+          <p className="text-xs text-text-secondary">Dispatch logistics routes and manage trip execution stages.</p>
+        </div>
+        <Button onClick={() => setIsModalOpen(true)}>
+          <Plus size={16} />
+          Create Dispatch
+        </Button>
       </div>
 
-      {/* Stepper (Horizontal Stepper at Top) */}
-      <AnimatePresence>
-        {selectedTrip && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-5 rounded-xl border border-default bg-card flex flex-col items-center justify-center select-none"
-          >
-            <div className="text-center mb-3">
-              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">Currently Tracking Status of:</span>
-              <span className="font-mono text-sm font-semibold text-accent">{selectedTrip.id}</span>
-              <span className="text-xs text-text-muted"> ({selectedTrip.source.split(',')[0]} → {selectedTrip.destination.split(',')[0]})</span>
-            </div>
+      {/* KPI Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KPICard label="Total Dispatches" value={totalTripsCount} color="amber" />
+        <KPICard label="Active On Road" value={activeDispatchedCount} color="blue" />
+        <KPICard label="Trips Completed" value={completedTripsCount} color="green" />
+        <KPICard label="Trips Cancelled" value={cancelledTripsCount} color="gray" />
+      </div>
 
-            {/* Stepper Graphic */}
-            <div className="relative flex items-center justify-between w-full max-w-lg mt-2 mb-4">
-              {/* Connecting line */}
-              <div className="absolute left-0 right-0 h-0.5 bg-border-default top-1/2 -translate-y-1/2 z-0" />
-              
-              {/* Progress filling line */}
-              <motion.div
-                className={`absolute left-0 h-0.5 ${stepper.lineColor} top-1/2 -translate-y-1/2 z-0`}
-                initial={{ width: 0 }}
-                animate={{ 
-                  width: stepper.activeStep === 0 ? '0%' : stepper.activeStep === 1 ? '50%' : '100%' 
-                }}
-                transition={{ duration: 0.4 }}
-              />
+      {/* Main Table List */}
+      <DataTable
+        columns={columns}
+        data={trips}
+        onRowClick={(row) => setSelectedTripId(row.id)}
+        emptyMessage="No logistics dispatches logged."
+      />
 
-              {/* Steps Dots */}
-              {stepper.steps.map((label, idx) => {
-                const isCompleted = idx < stepper.activeStep;
-                const isActive = idx === stepper.activeStep;
-                const isPending = idx > stepper.activeStep;
-
-                let dotColor = "border-default bg-[#131826] text-text-muted";
-                if (isActive) dotColor = `border-accent text-accent shadow-md shadow-accent/20 ring-4 ring-accent/10`;
-                if (isCompleted) {
-                  dotColor = stepper.color.includes('status-retired') 
-                    ? "border-status-retired bg-status-retired text-white" 
-                    : stepper.activeStep === 2 
-                      ? "border-status-available bg-status-available text-[#0B0E14]" 
-                      : "border-status-ontrip bg-status-ontrip text-white";
-                }
-
-                return (
-                  <div key={label} className="relative z-10 flex flex-col items-center">
-                    <motion.div
-                      className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[10px] font-bold ${dotColor} transition-colors duration-300`}
-                      initial={{ scale: 0.8 }}
-                      animate={{ scale: isActive ? 1.1 : 1 }}
-                    >
-                      {isCompleted ? <Check size={12} strokeWidth={3} /> : idx + 1}
-                    </motion.div>
-                    <span 
-                      className={`text-[10px] font-semibold mt-1.5 transition-colors duration-200
-                        ${isActive ? 'text-text-primary' : 'text-text-muted'}
-                      `}
-                    >
-                      {label}
-                    </span>
+      {/* Dispatch Creator Stepper Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setActiveStep(1);
+          setFormErrors({});
+        }}
+        title="New Logistics Dispatch Wizard"
+      >
+        <div className="space-y-6">
+          {/* Stepper Progress bar */}
+          <div className="flex items-center justify-between border-b border-default pb-4 select-none">
+            {STEP_INFOS.map(({ step, title, desc }) => {
+              const active = activeStep === step;
+              const completed = activeStep > step;
+              return (
+                <div key={step} className="flex items-center gap-2">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200 ${
+                    active ? 'bg-accent text-[#0B0E14]' : 
+                    completed ? 'bg-status-available/20 text-status-available border border-status-available/30' : 
+                    'bg-input border border-default text-text-muted'
+                  }`}>
+                    {step}
                   </div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main Grid: Form Left, Board Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Form */}
-        <form onSubmit={handleSubmit} className="lg:col-span-5 p-6 rounded-xl border border-default bg-card space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary border-b border-default pb-2.5 mb-2 flex items-center gap-2 select-none">
-            <Play size={16} className="text-accent" />
-            Dispatch New Trip
-          </h3>
-
-          <Input
-            label="Source Location"
-            name="source"
-            value={formValues.source}
-            onChange={handleInputChange}
-            error={formErrors.source}
-            placeholder="e.g. Houston Logistics, TX"
-          />
-
-          <Input
-            label="Destination"
-            name="destination"
-            value={formValues.destination}
-            onChange={handleInputChange}
-            error={formErrors.destination}
-            placeholder="e.g. Dallas Hub, TX"
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            {/* Vehicle Selection */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary select-none">
-                Assign Vehicle
-              </label>
-              <select
-                name="vehicleId"
-                value={formValues.vehicleId}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 bg-input text-text-primary text-sm rounded-lg border focus:outline-none focus:border-border-focus transition-all duration-200 
-                  ${formErrors.vehicleId ? 'border-status-retired' : 'border-default'}
-                `}
-              >
-                <option value="">Select Vehicle...</option>
-                {availableVehicles.map(v => (
-                  <option key={v.id} value={v.id}>
-                    {v.regNumber} — {v.name} ({v.maxLoadCapacity.toLocaleString()} kg)
-                  </option>
-                ))}
-              </select>
-              {formErrors.vehicleId && (
-                <p className="text-[10px] text-status-retired mt-0.5">{formErrors.vehicleId}</p>
-              )}
-            </div>
-
-            {/* Driver Selection */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary select-none">
-                Assign Driver
-              </label>
-              <select
-                name="driverId"
-                value={formValues.driverId}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 bg-input text-text-primary text-sm rounded-lg border focus:outline-none focus:border-border-focus transition-all duration-200 
-                  ${formErrors.driverId ? 'border-status-retired' : 'border-default'}
-                `}
-              >
-                <option value="">Select Driver...</option>
-                {availableDrivers.map(d => (
-                  <option key={d.id} value={d.id}>
-                    {d.name} (Safety: {d.safetyScore}%)
-                  </option>
-                ))}
-              </select>
-              {formErrors.driverId && (
-                <p className="text-[10px] text-status-retired mt-0.5">{formErrors.driverId}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Cargo Weight (kg)"
-              name="cargoWeight"
-              value={formValues.cargoWeight}
-              onChange={handleInputChange}
-              error={formErrors.cargoWeight}
-              placeholder="e.g. 5000"
-              type="number"
-            />
-            <Input
-              label="Planned Distance (km)"
-              name="plannedDistance"
-              value={formValues.plannedDistance}
-              onChange={handleInputChange}
-              error={formErrors.plannedDistance}
-              placeholder="e.g. 250"
-              type="number"
-            />
-          </div>
-
-          {/* Live Weight Validation Alert Banner */}
-          <AnimatePresence>
-            {isOverCapacity && (
-              <motion.div
-                initial={{ opacity: 0, height: 0, y: -10 }}
-                animate={{ opacity: 1, height: 'auto', y: 0 }}
-                exit={{ opacity: 0, height: 0, y: -10 }}
-                className="bg-status-retired/10 border border-status-retired/30 p-3 rounded-lg flex gap-2.5 items-start text-xs text-status-retired"
-              >
-                <ShieldAlert size={16} className="shrink-0 mt-0.5 animate-pulse" />
-                <div>
-                  <span className="font-bold">Over Capacity Warning: </span>
-                  Cargo weight of {Number(formValues.cargoWeight).toLocaleString()} kg exceeds vehicle's max capacity of {selectedVehicleObj?.maxLoadCapacity.toLocaleString()} kg!
+                  <div className="hidden sm:block">
+                    <p className={`text-[10px] font-bold uppercase tracking-wider ${active ? 'text-text-primary' : 'text-text-muted'}`}>{title}</p>
+                    <p className="text-[9px] text-text-muted/65 mt-0.5">{desc}</p>
+                  </div>
                 </div>
-              </motion.div>
+              );
+            })}
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4 font-sans">
+            {/* Step 1: Routing */}
+            {activeStep === 1 && (
+              <div className="space-y-3">
+                <Input
+                  label="Starting Origin Depot"
+                  name="source"
+                  value={formValues.source}
+                  onChange={handleInputChange}
+                  error={formErrors.source}
+                  placeholder="e.g. Central Depot Hub"
+                />
+                <Input
+                  label="Destination Point"
+                  name="destination"
+                  value={formValues.destination}
+                  onChange={handleInputChange}
+                  error={formErrors.destination}
+                  placeholder="e.g. Warehouse Sector B"
+                />
+                <Input
+                  label="Planned Distance (km)"
+                  name="plannedDistance"
+                  value={formValues.plannedDistance}
+                  onChange={handleInputChange}
+                  error={formErrors.plannedDistance}
+                  placeholder="e.g. 150"
+                  type="number"
+                />
+                <div className="flex justify-end pt-4 border-t border-default">
+                  <Button variant="secondary" onClick={() => setIsModalOpen(false)} className="mr-3">Cancel</Button>
+                  <Button onClick={handleNextStep}>Next Step</Button>
+                </div>
+              </div>
             )}
-          </AnimatePresence>
 
-          <Button 
-            type="submit" 
-            disabled={isOverCapacity} 
-            className="w-full mt-2"
-          >
-            Dispatch Trip
-          </Button>
-        </form>
+            {/* Step 2: Cargo Weight */}
+            {activeStep === 2 && (
+              <div className="space-y-3">
+                <Input
+                  label="Cargo Payload Weight (kg)"
+                  name="cargoWeight"
+                  value={formValues.cargoWeight}
+                  onChange={handleInputChange}
+                  error={formErrors.cargoWeight}
+                  placeholder="e.g. 14500"
+                  type="number"
+                />
+                <div className="flex justify-end pt-4 border-t border-default">
+                  <Button variant="secondary" onClick={handlePrevStep} className="mr-3">Back</Button>
+                  <Button onClick={handleNextStep}>Next Step</Button>
+                </div>
+              </div>
+            )}
 
-        {/* Right Column: Live Board */}
-        <div className="lg:col-span-7 space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary border-b border-default pb-2.5 flex items-center justify-between select-none">
-            <span>Logistics Dispatch Board ({trips.length})</span>
-            <span className="text-[10px] text-text-muted uppercase tracking-normal">Click trip card to track status</span>
-          </h3>
-
-          <div className="space-y-3 overflow-y-auto max-h-[580px] pr-1">
-            <AnimatePresence initial={false}>
-              {trips.map((trip) => {
-                const isSelected = selectedTripId === trip.id;
+            {/* Step 3: Vehicle & Driver Selection */}
+            {activeStep === 3 && (
+              <div className="space-y-4">
                 
-                // Fetch vehicle and driver info for display
-                const tripVeh = vehicles.find(v => v.id === trip.vehicleId);
-                const tripDrv = drivers.find(d => d.id === trip.driverId);
-
-                return (
-                  <motion.div
-                    key={trip.id}
-                    layout
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.25 }}
-                    onClick={() => setSelectedTripId(trip.id)}
-                    className={`p-4 rounded-xl border transition-all duration-150 cursor-pointer select-none
-                      ${isSelected 
-                        ? 'border-accent bg-card-hover shadow-lg shadow-accent/5 ring-1 ring-accent/20' 
-                        : 'border-default bg-card hover:bg-card-hover hover:border-text-secondary/30'
-                      }
-                    `}
+                {/* Vehicle Selection dropdown */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary select-none">
+                    Select Available Vehicle
+                  </label>
+                  <select
+                    name="vehicleId"
+                    value={formValues.vehicleId}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 bg-input text-text-primary text-sm rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
                   >
-                    <div className="flex items-start justify-between mb-2.5">
+                    <option value="">-- Select Available Vehicle --</option>
+                    {availableVehicles.map(v => (
+                      <option key={v.id} value={v.id}>
+                        {v.regNumber} — {v.name} (Cap: {v.maxLoadCapacity.toLocaleString()} kg)
+                      </option>
+                    ))}
+                  </select>
+                  {formErrors.vehicleId && <p className="text-[10px] text-status-retired font-medium">{formErrors.vehicleId}</p>}
+                </div>
+
+                {/* Driver Selection dropdown */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary select-none">
+                    Assign Driver (Available & Unexpired)
+                  </label>
+                  <select
+                    name="driverId"
+                    value={formValues.driverId}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 bg-input text-[#E5E7EB] text-sm rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
+                  >
+                    <option value="">-- Assign Available Operator --</option>
+                    {availableDrivers.map(d => (
+                      <option key={d.id} value={d.id}>
+                        {d.name} — Class: {d.licenseCategory} (Safety: {d.safetyScore}%)
+                      </option>
+                    ))}
+                  </select>
+                  {formErrors.driverId && <p className="text-[10px] text-status-retired font-medium">{formErrors.driverId}</p>}
+                </div>
+
+                {/* Overload Capacity Check warning box */}
+                <AnimatePresence>
+                  {isOverloaded && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="p-3 bg-status-retired/10 border border-status-retired/20 text-status-retired text-[11px] font-medium rounded-lg flex gap-2 select-none items-start"
+                    >
+                      <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-mono text-xs font-bold text-accent">{trip.id}</span>
-                        <div className="text-sm font-bold text-text-primary mt-1 flex items-center gap-1.5 flex-wrap">
-                          <span>{trip.source.split(',')[0]}</span>
-                          <ArrowRight size={12} className="text-text-muted" />
-                          <span>{trip.destination.split(',')[0]}</span>
+                        <span className="font-semibold block mb-0.5">Cargo Capacity Overload Warning:</span>
+                        Weight ({Number(formValues.cargoWeight).toLocaleString()} kg) exceeds vehicle maximum capacity limit ({selectedVehicleObj?.maxLoadCapacity.toLocaleString()} kg).
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Footer Buttons */}
+                <div className="flex justify-end pt-4 border-t border-default select-none">
+                  <Button variant="secondary" onClick={handlePrevStep} className="mr-3">Back</Button>
+                  <Button type="submit" disabled={isOverloaded}>
+                    Dispatch Route
+                  </Button>
+                </div>
+              </div>
+            )}
+          </form>
+        </div>
+      </Modal>
+
+      {/* Side Details Drawer */}
+      <AnimatePresence>
+        {selectedTripObj && (
+          <div className="fixed inset-0 z-40 flex justify-end font-sans">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedTripId(null)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-xs"
+            />
+
+            {/* Drawer */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 220 }}
+              className="relative z-10 w-full max-w-lg h-full bg-sidebar border-l border-default p-6 shadow-2xl flex flex-col overflow-hidden text-text-primary"
+            >
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between border-b border-default pb-4 mb-5">
+                <div>
+                  <h3 className="text-lg font-bold">Dispatch Detail</h3>
+                  <span className="font-mono text-xs text-text-secondary select-all">{selectedTripObj.id}</span>
+                </div>
+                <button
+                  onClick={() => setSelectedTripId(null)}
+                  className="text-text-muted hover:text-text-primary rounded-md p-1 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Scrollable details */}
+              <div className="flex-1 overflow-y-auto space-y-6 pr-1">
+                {/* Route Diagram card */}
+                <div className="bg-card border border-default p-4 rounded-xl space-y-3">
+                  <div className="flex justify-between items-center select-none">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Route Path</span>
+                    <StatusBadge status={selectedTripObj.status} />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-accent border-2 border-accent" />
+                      <div className="w-[2px] h-8 bg-default border-dashed border-default" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-status-shop border-2 border-status-shop" />
+                    </div>
+                    <div className="flex flex-col gap-3 font-semibold text-xs">
+                      <div>
+                        <span className="text-text-secondary font-medium mr-1.5">Origin:</span>
+                        <span>{selectedTripObj.source}</span>
+                      </div>
+                      <div>
+                        <span className="text-text-secondary font-medium mr-1.5">Destination:</span>
+                        <span>{selectedTripObj.destination}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Details list */}
+                <div className="space-y-4">
+                  {/* Distance & Load */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-card p-3 rounded-lg border border-default">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block">Cargo weight</span>
+                      <span className="font-mono font-bold mt-1 block text-sm">{selectedTripObj.cargoWeight.toLocaleString()} kg</span>
+                    </div>
+                    <div className="bg-card p-3 rounded-lg border border-default">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block">Planned Distance</span>
+                      <span className="font-mono font-bold mt-1 block text-sm">{selectedTripObj.plannedDistance} km</span>
+                    </div>
+                  </div>
+
+                  {/* Assigned Vehicle details */}
+                  <div className="bg-card p-4 rounded-xl border border-default space-y-2">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block">Vehicle details</span>
+                    {detailVehicleObj ? (
+                      <div className="flex items-center gap-3 text-xs">
+                        <Truck size={20} className="text-accent shrink-0" />
+                        <div>
+                          <div className="font-semibold text-text-primary">{detailVehicleObj.name}</div>
+                          <div className="font-mono text-[10px] text-text-secondary mt-0.5">{detailVehicleObj.regNumber}</div>
                         </div>
                       </div>
-                      <StatusBadge status={trip.status} />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 border-y border-default/50 py-2.5 my-2.5 text-xs text-text-secondary font-medium">
-                      <div className="flex items-center gap-1.5">
-                        <Truck size={14} className="text-text-muted" />
-                        <span>{tripVeh ? `${tripVeh.regNumber} (${tripVeh.name.split(' ')[0]})` : 'Unknown Vehicle'}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <User size={14} className="text-text-muted" />
-                        <span>{tripDrv ? tripDrv.name : 'Unknown Driver'}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between text-[11px] text-text-muted font-semibold">
-                      <span>Cargo: <span className="font-mono text-text-secondary">{trip.cargoWeight.toLocaleString()} kg</span></span>
-                      <span>Distance: <span className="font-mono text-text-secondary">{trip.plannedDistance.toLocaleString()} km</span></span>
-                    </div>
-
-                    {/* Operational controls for Dispatched trips */}
-                    {trip.status === "Dispatched" && (
-                      <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-default/40" onClick={e => e.stopPropagation()}>
-                        <Button
-                          variant="secondary"
-                          onClick={() => {
-                            cancelTrip(trip.id);
-                            toast.success(`Trip ${trip.id} Cancelled.`);
-                          }}
-                          className="!px-2.5 !py-1 !text-[11px] border-status-retired/30 text-status-retired hover:bg-status-retired/5 hover:border-status-retired"
-                        >
-                          <X size={12} />
-                          Cancel Trip
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            completeTrip(trip.id);
-                            toast.success(`Trip ${trip.id} Completed!`);
-                          }}
-                          className="!px-2.5 !py-1 !text-[11px] bg-status-available hover:bg-[#1bb050] text-[#0B0E14]"
-                        >
-                          <Check size={12} strokeWidth={2.5} />
-                          Complete
-                        </Button>
-                      </div>
+                    ) : (
+                      <span className="text-xs text-text-muted italic">No vehicle mapping found.</span>
                     )}
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
+                  </div>
+
+                  {/* Assigned Operator details */}
+                  <div className="bg-card p-4 rounded-xl border border-default space-y-2">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block">Driver details</span>
+                    {detailDriverObj ? (
+                      <div className="flex items-center gap-3 text-xs">
+                        <User size={20} className="text-accent shrink-0" />
+                        <div>
+                          <div className="font-semibold text-text-primary">{detailDriverObj.name}</div>
+                          <div className="text-[10px] text-text-secondary mt-0.5">License: {detailDriverObj.licenseNumber} (Cat {detailDriverObj.licenseCategory})</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-text-muted italic">No driver mapping found.</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom life-cycle control buttons */}
+              {selectedTripObj.status === 'Dispatched' && (
+                <div className="mt-auto border-t border-default pt-4 flex gap-3 select-none">
+                  {/* Cancel dispatch */}
+                  <Button
+                    variant="secondary"
+                    onClick={async () => {
+                      try {
+                        await cancelTrip(selectedTripObj.rawId);
+                        toast.success(`Trip T${String(selectedTripObj.rawId).padStart(3, '0')} Cancelled.`);
+                        setSelectedTripId(null);
+                      } catch {
+                        // handled
+                      }
+                    }}
+                    className="flex-1 !py-2.5 border-status-retired/30 text-status-retired hover:bg-status-retired/5 hover:border-status-retired"
+                  >
+                    Cancel Dispatch
+                  </Button>
+
+                  {/* Complete dispatch */}
+                  <Button
+                    onClick={async () => {
+                      try {
+                        await completeTrip(selectedTripObj.rawId);
+                        toast.success(`Trip T${String(selectedTripObj.rawId).padStart(3, '0')} Completed!`);
+                        setSelectedTripId(null);
+                      } catch {
+                        // handled
+                      }
+                    }}
+                    className="flex-1 !py-2.5"
+                  >
+                    Complete Dispatch
+                  </Button>
+                </div>
+              )}
+            </motion.div>
           </div>
-        </div>
-      </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
