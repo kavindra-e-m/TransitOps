@@ -30,10 +30,9 @@ exports.getSummary = (req, res) => {
       );
     }
 
-    const revenue = 50000; // NOTE: No revenue column exists in the DB schema.
-    // This remains a placeholder until Member 1 adds a revenue/fare field to the trips table.
-    // Required: ALTER TABLE trips ADD COLUMN revenue REAL DEFAULT 0;
-    // Then replace with: db.prepare('SELECT SUM(revenue) as total FROM trips WHERE status = "Completed"').get().total || 0;
+    // Calculate dynamic revenue based on completed trips planned_distance * 4.5 (matching client REVENUE_PER_KM rate)
+    const revenueRow = db.prepare("SELECT SUM(planned_distance * 4.5) as total FROM trips WHERE status = 'Completed'").get();
+    const revenue = revenueRow.total || 0;
 
     const operationalCost = fuelCost + maintenanceCost + expensesCost;
     const vehicleROI = (revenue - (maintenanceCost + fuelCost)) / acquisitionCost;
