@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { Shield, ShieldAlert, CheckSquare, Square, Check, X, AlertTriangle, HelpCircle } from 'lucide-react';
 
