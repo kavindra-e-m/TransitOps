@@ -4,22 +4,22 @@
 
 :root {
   --bg-primary: #0B0E14;
-  --bg-sidebar: #0D1117;
-  --bg-card: #131826;
-  --bg-card-hover: #171E2E;
-  --bg-input: #0F1420;
+  --bg-sidebar: #10131a;
+  --bg-card: #1d2026;
+  --bg-card-hover: #272a31;
+  --bg-input: #0b0e14;
   --border-default: #1F2937;
-  --border-focus: #F59E0B;
-  --text-primary: #F9FAFB;
-  --text-secondary: #9CA3AF;
-  --text-muted: #6B7280;
-  --accent: #F59E0B;
-  --accent-hover: #D97706;
-  --status-available: #22C55E;
-  --status-ontrip: #3B82F6;
-  --status-shop: #F97316;
-  --status-retired: #EF4444;
-  --status-draft: #6B7280;
+  --border-focus: #ffc174;
+  --text-primary: #e1e2eb;
+  --text-secondary: #d8c3ad;
+  --text-muted: #a08e7a;
+  --accent: #ffc174;
+  --accent-hover: #ffddb8;
+  --status-available: #51e77b;
+  --status-ontrip: #adc6ff;
+  --status-shop: #f97316;
+  --status-retired: #ffb4ab;
+  --status-draft: #32353c;
 }
 
 body {
@@ -90,3 +90,33 @@ body {
 .shake-animation {
   animation: shake 0.4s ease-in-out;
 }
+
+/* Stitch Specific Utility Classes */
+.glow-amber {
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
+}
+.tactical-border {
+  border: 1px solid var(--border-default);
+}
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  background-color: var(--status-available);
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+  animation: pulse-glow 2s infinite;
+}
+@keyframes pulse-glow {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(81, 231, 123, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(81, 231, 123, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(81, 231, 123, 0); }
+}
+.active-marker {
+  position: absolute;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background-color: var(--accent);
+}
+
