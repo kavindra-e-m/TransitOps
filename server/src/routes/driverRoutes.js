@@ -1,1 +1,34 @@
-const express = require('express'); const router = express.Router(); router.get('/', (req, res) => res.json([{ id: 1, name: 'Alex Mercer', license_no: 'LIC-1234', license_category: 'Class B', license_expiry: '2028-12-31', contact: '555-0101', trip_completion_pct: 100, safety_score: 100, status: 'Available' }])); router.post('/', (req, res) => res.status(201).json({ id: 2, ...req.body, status: 'Available' })); router.put('/:id', (req, res) => res.json({ id: req.params.id, ...req.body })); router.patch('/:id/status', (req, res) => res.json({ id: req.params.id, status: req.body.status })); module.exports = router;
+const express = require('express');
+const { body } = require('express-validator');
+const router = express.Router();
+const driverController = require('../controllers/driverController');
+const validate = require('../middleware/validate');
+const auth = require('../middleware/auth');
+const rbac = require('../middleware/rbac');
+
+router.use(auth);
+
+router.get('/', driverController.getAll);
+
+const driverValidation = [
+  body('name').notEmpty().withMessage('Name is required'),
+  body('license_no').notEmpty().withMessage('License number is required'),
+  body('license_category').notEmpty().withMessage('License category is required'),
+  body('license_expiry').isISO8601().withMessage('Valid expiry date is required'),
+  validate
+];
+
+router.post('/', rbac('Fleet Manager', 'Dispatcher'), driverValidation, driverController.create);
+router.put('/:id', rbac('Fleet Manager', 'Dispatcher'), [
+  body('name').notEmpty().withMessage('Name is required'),
+  body('license_category').notEmpty().withMessage('License category is required'),
+  body('license_expiry').isISO8601().withMessage('Valid expiry date is required'),
+  validate
+], driverController.update);
+
+router.patch('/:id/status', rbac('Fleet Manager', 'Dispatcher'), [
+  body('status').isIn(['Available', 'On Trip', 'Suspended']).withMessage('Invalid status'),
+  validate
+], driverController.updateStatus);
+
+module.exports = router;
