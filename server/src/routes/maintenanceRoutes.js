@@ -21,4 +21,9 @@ const maintenanceValidation = [
 
 router.post('/', rbac('Fleet Manager', 'Safety Officer'), maintenanceValidation, maintenanceController.create);
 
-module.exports = router;
+router.patch('/:id/status', rbac('Fleet Manager', 'Safety Officer'), [
+  body('status').isIn(['Scheduled', 'In Progress', 'Completed']).withMessage('Invalid status'),
+  validate
+], maintenanceController.updateStatus);
+
+module.exports = router;

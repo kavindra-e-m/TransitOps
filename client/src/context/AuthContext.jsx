@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
+import { loginAPI } from '../api/auth';
+import { setClientToken } from '../api/client';
 
 const AuthContext = createContext();
 
@@ -8,18 +10,24 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
 
   const login = async (email, password, selectedRole) => {
-    // Swap this block for a real axios call: const res = await api.post('/auth/login', { email, password })
-    const fakeToken = `mock-token-${Date.now()}`;
-    const fakeUser = { email, name: email.split('@')[0] };
-    setUser(fakeUser);
-    setRole(selectedRole);
-    setToken(fakeToken);
+    const res = await loginAPI(email, password);
+    
+    // Validate role mapping
+    if (selectedRole && res.user.role !== selectedRole) {
+      throw new Error(`Access denied. You do not hold the '${selectedRole}' role.`);
+    }
+
+    setUser(res.user);
+    setRole(res.user.role);
+    setToken(res.token);
+    setClientToken(res.token);
   };
 
   const logout = () => {
     setUser(null);
     setRole(null);
     setToken(null);
+    setClientToken(null);
   };
 
   return (

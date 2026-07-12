@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { Plus, Search, Filter, X, Truck, Wrench, Calendar, Compass, DollarSign, Activity } from 'lucide-react';
+import { Plus, Search, X, Truck, Wrench, Calendar, Compass, DollarSign } from 'lucide-react';
 
 import { useVehicles, useTrips, useMaintenance, useAppActions } from '../context/AppContext';
+import { checkRegUniqueAPI } from '../api/vehicles';
 import KPICard from '../components/common/KPICard';
 import StatusBadge from '../components/common/StatusBadge';
 import DataTable from '../components/common/DataTable';
@@ -39,6 +40,7 @@ const Fleet = () => {
     acquisitionCost: ""
   });
   const [formErrors, setFormErrors] = useState({});
+  const [regChecking, setRegChecking] = useState(false);
 
   // Debounce search query
   useEffect(() => {
@@ -48,20 +50,36 @@ const Fleet = () => {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Form Field Validation (Real-time uniqueness check)
+  // Debounced API uniqueness check for Reg No
+  useEffect(() => {
+    const reg = formValues.regNumber.trim();
+    if (!reg) {
+      setFormErrors((prev) => ({ ...prev, regNumber: "" }));
+      return;
+    }
+
+    setRegChecking(true);
+    const delay = setTimeout(async () => {
+      try {
+        const res = await checkRegUniqueAPI(reg);
+        if (!res.isUnique) {
+          setFormErrors((prev) => ({ ...prev, regNumber: "This registration number is already registered" }));
+        } else {
+          setFormErrors((prev) => ({ ...prev, regNumber: "" }));
+        }
+      } catch (err) {
+        console.error("Error validation registration", err);
+      } finally {
+        setRegChecking(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [formValues.regNumber]);
+
+  // Local Form Field Validation
   const validateField = (name, value) => {
     let error = "";
-    if (name === "regNumber") {
-      if (!value.trim()) {
-        error = "Registration number is required";
-      } else if (
-        vehicles.some(
-          (v) => v.regNumber.trim().toUpperCase() === value.trim().toUpperCase()
-        )
-      ) {
-        error = "This registration number is already registered";
-      }
-    }
     if (name === "name" && !value.trim()) {
       error = "Vehicle name/model is required";
     }
@@ -87,15 +105,12 @@ const Fleet = () => {
     validateField(name, value);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Final validation checks
-    const errors = {};
+    const errors = { ...formErrors };
     if (!formValues.regNumber.trim()) errors.regNumber = "Registration number is required";
-    else if (vehicles.some(v => v.regNumber.trim().toUpperCase() === formValues.regNumber.trim().toUpperCase())) {
-      errors.regNumber = "This registration number is already registered";
-    }
     if (!formValues.name.trim()) errors.name = "Vehicle name/model is required";
     if (!formValues.maxLoadCapacity || isNaN(formValues.maxLoadCapacity) || Number(formValues.maxLoadCapacity) <= 0) {
       errors.maxLoadCapacity = "Must be a positive number";
@@ -113,21 +128,24 @@ const Fleet = () => {
       return;
     }
 
-    // Call Context action to add vehicle
-    addVehicle(formValues);
-    toast.success(`Vehicle ${formValues.regNumber} registered successfully!`);
-    
-    // Reset and Close
-    setFormValues({
-      regNumber: "",
-      name: "",
-      type: "Heavy Truck",
-      maxLoadCapacity: "",
-      odometer: "",
-      acquisitionCost: ""
-    });
-    setFormErrors({});
-    setIsModalOpen(false);
+    try {
+      await addVehicle(formValues);
+      toast.success(`Vehicle ${formValues.regNumber} registered successfully!`);
+      
+      // Reset and Close
+      setFormValues({
+        regNumber: "",
+        name: "",
+        type: "Heavy Truck",
+        maxLoadCapacity: "",
+        odometer: "",
+        acquisitionCost: ""
+      });
+      setFormErrors({});
+      setIsModalOpen(false);
+    } catch {
+      // Toast handles error automatically via interceptor
+    }
   };
 
   // Filtered Vehicles list
@@ -277,14 +295,19 @@ const Fleet = () => {
         title="Add Vehicle to Registry"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Registration Number (Unique)"
-            name="regNumber"
-            value={formValues.regNumber}
-            onChange={handleInputChange}
-            error={formErrors.regNumber}
-            placeholder="e.g. TX-9088-A"
-          />
+          <div className="relative">
+            <Input
+              label="Registration Number (Unique)"
+              name="regNumber"
+              value={formValues.regNumber}
+              onChange={handleInputChange}
+              error={formErrors.regNumber}
+              placeholder="e.g. TX-9088-A"
+            />
+            {regChecking && (
+              <span className="absolute right-3 top-9 text-[10px] text-accent animate-pulse">Checking uniqueness...</span>
+            )}
+          </div>
 
           <Input
             label="Name / Model"
@@ -424,12 +447,12 @@ const Fleet = () => {
                   {vehicleTrips.length > 0 ? (
                     <div className="space-y-2">
                       {vehicleTrips.map(trip => (
-                        <div key={trip.id} className="bg-card p-3 rounded-lg border border-default text-xs flex justify-between items-center">
+                        <div key={trip.id} className="bg-card p-3 rounded-lg border border-default text-xs flex justify-between items-center font-sans">
                           <div>
-                            <div className="font-medium flex items-center gap-2">
-                              <span>{trip.source.split(',')[0]}</span>
+                            <div className="font-medium flex items-center gap-2 text-text-primary">
+                              <span>{trip.source}</span>
                               <span className="text-text-muted">→</span>
-                              <span>{trip.destination.split(',')[0]}</span>
+                              <span>{trip.destination}</span>
                             </div>
                             <span className="text-text-muted text-[10px] block mt-1">Cargo: {trip.cargoWeight} kg | Distance: {trip.plannedDistance} km</span>
                           </div>
@@ -453,7 +476,7 @@ const Fleet = () => {
                   {vehicleMaintenance.length > 0 ? (
                     <div className="space-y-2">
                       {vehicleMaintenance.map(record => (
-                        <div key={record.id} className="bg-card p-3 rounded-lg border border-default text-xs flex justify-between items-center">
+                        <div key={record.id} className="bg-card p-3 rounded-lg border border-default text-xs flex justify-between items-center font-sans">
                           <div>
                             <div className="font-semibold text-text-primary">{record.serviceType}</div>
                             <span className="text-text-muted text-[10px] mt-1 flex items-center gap-2">

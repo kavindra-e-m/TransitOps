@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { Shield, ShieldAlert, CheckSquare, Square, Check, X, AlertTriangle, HelpCircle } from 'lucide-react';
+import { ShieldAlert, Check, X, AlertTriangle } from 'lucide-react';
 
 import { useDrivers, useAppActions } from '../context/AppContext';
 import KPICard from '../components/common/KPICard';
@@ -41,7 +41,7 @@ const Drivers = () => {
   };
 
   // Bulk status update action
-  const handleBulkStatusUpdate = (status) => {
+  const handleBulkStatusUpdate = async (status) => {
     if (selectedDriverIds.length === 0) return;
 
     // Safety check: is any selected driver expired, and are we setting status to Available?
@@ -55,9 +55,13 @@ const Drivers = () => {
       return;
     }
 
-    updateDriversStatusBulk(selectedDriverIds, status);
-    toast.success(`Updated status of ${selectedDriverIds.length} driver(s) to '${status}'`);
-    setSelectedDriverIds([]); // Clear selection
+    try {
+      await updateDriversStatusBulk(selectedDriverIds, status);
+      toast.success(`Updated status of ${selectedDriverIds.length} driver(s) to '${status}'`);
+      setSelectedDriverIds([]); // Clear selection
+    } catch {
+      // Handled
+    }
   };
 
   // Helper to check if "Available" toggle should be disabled for current selection
@@ -70,9 +74,9 @@ const Drivers = () => {
   const totalDrivers = drivers.length;
   const availableDrivers = drivers.filter((d) => d.status === "Available").length;
   const onTripDrivers = drivers.filter((d) => d.status === "On Trip").length;
-  const avgSafetyScore = Math.round(
+  const avgSafetyScore = totalDrivers > 0 ? Math.round(
     drivers.reduce((acc, d) => acc + d.safetyScore, 0) / totalDrivers
-  );
+  ) : 0;
 
   // Safety Score Circular Progress Ring component
   const SafetyScoreCircle = ({ score }) => {
@@ -181,12 +185,12 @@ const Drivers = () => {
       {/* Data Table section */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-text-muted">
+          <span className="text-xs font-semibold text-text-muted select-none">
             {selectedDriverIds.length} driver(s) selected
           </span>
           <button
             onClick={toggleSelectAll}
-            className="text-xs text-accent hover:text-accent-hover font-semibold transition-colors"
+            className="text-xs text-accent hover:text-accent-hover font-semibold transition-colors select-none"
           >
             {selectedDriverIds.length === drivers.length ? "Deselect All" : "Select All Drivers"}
           </button>
@@ -206,7 +210,7 @@ const Drivers = () => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 15 }}
-            className="p-5 rounded-xl border border-default bg-card shadow-2xl flex items-center justify-between flex-wrap gap-4"
+            className="p-5 rounded-xl border border-default bg-card shadow-2xl flex items-center justify-between flex-wrap gap-4 select-none"
           >
             <div className="space-y-1">
               <h4 className="text-sm font-semibold text-text-primary">Bulk Operations</h4>
