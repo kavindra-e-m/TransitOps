@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { 
   Plus, Route, MapPin, Compass, AlertTriangle, ShieldAlert,
-  ChevronRight, Calendar, User, Truck, HelpCircle
+  ChevronRight, Calendar, User, Truck, HelpCircle, X, GitBranch
 } from 'lucide-react';
 
 import { 
@@ -15,6 +15,7 @@ import DataTable from '../components/common/DataTable';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
+import TripTimeline from '../components/common/Timeline';
 
 const STEP_INFOS = [
   { step: 1, title: "Origin & Dest.", desc: "Route mapping" },
@@ -450,6 +451,15 @@ const Trips = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Feature 1: Trip Timeline */}
+                <div className="bg-card border border-default p-4 rounded-xl">
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-text-muted mb-4 flex items-center gap-1.5">
+                    <GitBranch size={13} className="text-accent" />
+                    Dispatch Lifecycle
+                  </h4>
+                  <TripTimeline trip={selectedTripObj} />
                 </div>
 
                 {/* Details list */}
