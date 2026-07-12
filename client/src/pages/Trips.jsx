@@ -7,8 +7,9 @@ import {
 } from 'lucide-react';
 
 import { 
-  useVehicles, useDrivers, useTrips, useAppActions 
+  useVehicles, useDrivers, useTrips, useAppActions, useMaintenance, useExpenses
 } from '../context/AppContext';
+import { scoreVehicles, scoreDrivers } from '../utils/insights';
 import KPICard from '../components/common/KPICard';
 import StatusBadge from '../components/common/StatusBadge';
 import DataTable from '../components/common/DataTable';
@@ -27,6 +28,8 @@ const Trips = () => {
   const vehicles = useVehicles();
   const drivers = useDrivers();
   const trips = useTrips();
+  const maintenance = useMaintenance();
+  const expenses = useExpenses();
   
   const { dispatchTrip, completeTrip, cancelTrip } = useAppActions();
 
@@ -46,6 +49,10 @@ const Trips = () => {
   });
   const [formErrors, setFormErrors] = useState({});
 
+  // Override standard select view toggles
+  const [showAllVehicles, setShowAllVehicles] = useState(false);
+  const [showAllDrivers, setShowAllDrivers] = useState(false);
+
   // Filter list of available vehicles/drivers (only Available and unexpired)
   const availableVehicles = useMemo(() => {
     return vehicles.filter(v => v.status === 'Available');
@@ -54,6 +61,36 @@ const Trips = () => {
   const availableDrivers = useMemo(() => {
     return drivers.filter(d => d.status === 'Available');
   }, [drivers]);
+
+  // Ranked recommendation lists
+  const recommendedVehicles = useMemo(() => {
+    if (activeStep !== 3 || !formValues.cargoWeight) return [];
+    return scoreVehicles(
+      vehicles,
+      maintenance,
+      expenses,
+      trips,
+      Number(formValues.cargoWeight)
+    );
+  }, [activeStep, vehicles, maintenance, expenses, trips, formValues.cargoWeight]);
+
+  const recommendedDrivers = useMemo(() => {
+    if (activeStep !== 3) return [];
+    return scoreDrivers(drivers);
+  }, [activeStep, drivers]);
+
+  // Auto-select top recommendation on reaching Step 3
+  useEffect(() => {
+    if (activeStep === 3) {
+      const topVeh = recommendedVehicles[0]?.vehicle;
+      const topDrv = recommendedDrivers[0]?.driver;
+      setFormValues(prev => ({
+        ...prev,
+        vehicleId: prev.vehicleId || (topVeh ? String(topVeh.id) : ""),
+        driverId: prev.driverId || (topDrv ? String(topDrv.id) : "")
+      }));
+    }
+  }, [activeStep, recommendedVehicles, recommendedDrivers]);
 
   // Find selected objects inside the form
   const selectedVehicleObj = useMemo(() => {
@@ -318,45 +355,155 @@ const Trips = () => {
             {activeStep === 3 && (
               <div className="space-y-4">
                 
-                {/* Vehicle Selection dropdown */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary select-none">
-                    Select Available Vehicle
-                  </label>
-                  <select
-                    name="vehicleId"
-                    value={formValues.vehicleId}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-input text-text-primary text-sm rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
-                  >
-                    <option value="">-- Select Available Vehicle --</option>
-                    {availableVehicles.map(v => (
-                      <option key={v.id} value={v.id}>
-                        {v.regNumber} — {v.name} (Cap: {v.maxLoadCapacity.toLocaleString()} kg)
-                      </option>
-                    ))}
-                  </select>
+                {/* Recommended Vehicles Section */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center select-none">
+                    <label className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+                      Select Vehicle (Smart Recommendation)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowAllVehicles(!showAllVehicles)}
+                      className="text-[10px] text-accent hover:underline font-semibold"
+                    >
+                      {showAllVehicles ? "Show Recommendations" : "Show All Available"}
+                    </button>
+                  </div>
+
+                  {!showAllVehicles ? (
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {recommendedVehicles.slice(0, 3).map((item) => {
+                        const v = item.vehicle;
+                        const matchPct = Math.round(item.score * 100);
+                        const isSelected = String(v.id) === String(formValues.vehicleId);
+                        return (
+                          <div
+                            key={v.id}
+                            type="button"
+                            onClick={() => setFormValues(prev => ({ ...prev, vehicleId: String(v.id) }))}
+                            className={`p-3 rounded-lg border transition-all cursor-pointer text-left relative flex justify-between items-center ${
+                              isSelected
+                                ? 'bg-accent/5 border-accent shadow-md shadow-accent/10'
+                                : 'bg-[#0B0E14]/40 border-default hover:border-accent/40'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1 pr-4">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-xs text-text-primary">{v.regNumber}</span>
+                                <span className="text-[10px] text-text-secondary truncate">— {v.name}</span>
+                              </div>
+                              <p className="text-[9px] text-text-muted mt-1 leading-relaxed">
+                                Cap: {v.maxLoadCapacity.toLocaleString()} kg · Odometer: {v.odometer.toLocaleString()} km
+                              </p>
+                              <p className="text-[8px] text-accent/80 font-medium mt-0.5 truncate italic">
+                                {item.reason}
+                              </p>
+                            </div>
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full select-none shrink-0 ${
+                              matchPct >= 80 ? 'bg-status-available/10 text-status-available border border-status-available/20' : 'bg-status-shop/10 text-status-shop border border-status-shop/20'
+                            }`}>
+                              {matchPct}% Match
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {recommendedVehicles.length === 0 && (
+                        <div className="text-center py-4 bg-card border border-default rounded-lg text-xs text-text-muted select-none">
+                          No suitable available vehicles found for this weight load.
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <select
+                      name="vehicleId"
+                      value={formValues.vehicleId}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 bg-input text-text-primary text-sm rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
+                    >
+                      <option value="">-- Select Available Vehicle --</option>
+                      {availableVehicles.map(v => (
+                        <option key={v.id} value={v.id}>
+                          {v.regNumber} — {v.name} (Cap: {v.maxLoadCapacity.toLocaleString()} kg)
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   {formErrors.vehicleId && <p className="text-[10px] text-status-retired font-medium">{formErrors.vehicleId}</p>}
                 </div>
 
-                {/* Driver Selection dropdown */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary select-none">
-                    Assign Driver (Available & Unexpired)
-                  </label>
-                  <select
-                    name="driverId"
-                    value={formValues.driverId}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-input text-[#E5E7EB] text-sm rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
-                  >
-                    <option value="">-- Assign Available Operator --</option>
-                    {availableDrivers.map(d => (
-                      <option key={d.id} value={d.id}>
-                        {d.name} — Class: {d.licenseCategory} (Safety: {d.safetyScore}%)
-                      </option>
-                    ))}
-                  </select>
+                {/* Recommended Drivers Section */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center select-none">
+                    <label className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+                      Assign Operator (Smart Recommendation)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowAllDrivers(!showAllDrivers)}
+                      className="text-[10px] text-accent hover:underline font-semibold"
+                    >
+                      {showAllDrivers ? "Show Recommendations" : "Show All Available"}
+                    </button>
+                  </div>
+
+                  {!showAllDrivers ? (
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {recommendedDrivers.slice(0, 3).map((item) => {
+                        const d = item.driver;
+                        const matchPct = Math.round(item.score * 100);
+                        const isSelected = String(d.id) === String(formValues.driverId);
+                        return (
+                          <div
+                            key={d.id}
+                            type="button"
+                            onClick={() => setFormValues(prev => ({ ...prev, driverId: String(d.id) }))}
+                            className={`p-3 rounded-lg border transition-all cursor-pointer text-left relative flex justify-between items-center ${
+                              isSelected
+                                ? 'bg-accent/5 border-accent shadow-md shadow-accent/10'
+                                : 'bg-[#0B0E14]/40 border-default hover:border-accent/40'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1 pr-4">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-xs text-text-primary">{d.name}</span>
+                                <span className="text-[10px] text-text-secondary font-mono">({d.licenseCategory})</span>
+                              </div>
+                              <p className="text-[9px] text-text-muted mt-1 leading-relaxed">
+                                Safety Score: {d.safetyScore}% · Completion: {d.tripCompletionPct}%
+                              </p>
+                              <p className="text-[8px] text-accent/80 font-medium mt-0.5 truncate italic">
+                                {item.reason}
+                              </p>
+                            </div>
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full select-none shrink-0 ${
+                              matchPct >= 80 ? 'bg-status-available/10 text-status-available border border-status-available/20' : 'bg-status-shop/10 text-status-shop border border-status-shop/20'
+                            }`}>
+                              {matchPct}% Match
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {recommendedDrivers.length === 0 && (
+                        <div className="text-center py-4 bg-card border border-default rounded-lg text-xs text-text-muted select-none">
+                          No available drivers found.
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <select
+                      name="driverId"
+                      value={formValues.driverId}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 bg-input text-[#E5E7EB] text-sm rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
+                    >
+                      <option value="">-- Assign Available Operator --</option>
+                      {availableDrivers.map(d => (
+                        <option key={d.id} value={d.id}>
+                          {d.name} — Class: {d.licenseCategory} (Safety: {d.safetyScore}%)
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   {formErrors.driverId && <p className="text-[10px] text-status-retired font-medium">{formErrors.driverId}</p>}
                 </div>
 
