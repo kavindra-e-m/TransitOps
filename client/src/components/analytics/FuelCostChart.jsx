@@ -30,13 +30,13 @@ const FuelCostChart = () => {
 
   return (
     <div className="bg-card p-6 rounded-xl border border-default space-y-4 select-none">
-      <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary border-b border-default pb-3 flex items-center gap-2">
+      <h3 className="text-sm font-bold uppercase tracking-wider text-primary border-b border-default pb-3 flex items-center gap-2">
         <Fuel size={16} className="text-status-shop" />
         Fuel Cost Trend
       </h3>
 
       {data.length === 0 ? (
-        <div className="flex h-48 items-center justify-center text-sm text-text-muted">
+        <div className="flex h-48 items-center justify-center text-sm text-muted">
           No fuel expense records found.
         </div>
       ) : (
@@ -48,7 +48,7 @@ const FuelCostChart = () => {
               <YAxis stroke="#6B7280" fontSize={11} tickLine={false} />
               <Tooltip
                 contentStyle={{ background: '#131826', border: '1px solid #1F2937', borderRadius: '8px' }}
-                labelClassName="text-xs font-semibold text-text-secondary"
+                labelClassName="text-xs font-semibold text-secondary"
                 itemStyle={{ fontFamily: 'JetBrains Mono', fontSize: 12, color: '#F97316' }}
                 formatter={(val) => [`$${val.toLocaleString()}`, 'Fuel Cost']}
               />

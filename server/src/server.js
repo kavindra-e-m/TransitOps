@@ -46,5 +46,10 @@ app.use('/api/rbac', require('./routes/rbacRoutes'));
 
 server.listen(PORT, () => {
   console.log(`Server + WebSockets running on port ${PORT}`);
+  
+  // Start vehicle location simulation
+  const startSimulation = require('./simulation');
+  const db = require('./db/connection');
+  startSimulation(db);
 });
 

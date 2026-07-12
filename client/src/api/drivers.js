@@ -15,3 +15,7 @@ export const updateDriverAPI = (id, driverData) => {
 export const updateDriverStatusAPI = (id, status) => {
   return client.patch(`/drivers/${id}/status`, { status }).then(res => res.data);
 };
+
+export const deleteDriverAPI = (id) => {
+  return client.delete(`/drivers/${id}`).then(res => res.data);
+};

@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS drivers (
     contact TEXT,
     trip_completion_pct REAL DEFAULT 100,
     safety_score REAL DEFAULT 100,
-    status TEXT NOT NULL CHECK(status IN ('Available', 'On Trip', 'Suspended')),
+    status TEXT NOT NULL CHECK(status IN ('Available', 'On Trip', 'Off Duty', 'Suspended')),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_drivers_license_no ON drivers(license_no);

@@ -20,11 +20,11 @@ const KPICard = ({ label, value, color = "blue", prefix = "", suffix = "" }) => 
     <div 
       className={`bg-card rounded-xl border border-default ${borderClass} border-l-[3.5px] p-5 transition-all duration-200 hover:bg-card-hover hover:-translate-y-1 hover:shadow-lg hover:shadow-black/20 select-none`}
     >
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-secondary">
         {label}
       </p>
-      <h3 className="kpi-value-custom mt-2 text-text-primary font-mono select-all flex items-baseline">
-        {prefix && <span className="text-xl font-sans mr-0.5 text-text-secondary">{prefix}</span>}
+      <h3 className="kpi-value-custom mt-2 text-primary font-mono select-all flex items-baseline">
+        {prefix && <span className="text-xl font-sans mr-0.5 text-secondary">{prefix}</span>}
         {isNumeric ? (
           <CountUp
             start={0}
@@ -36,7 +36,7 @@ const KPICard = ({ label, value, color = "blue", prefix = "", suffix = "" }) => 
         ) : (
           <span>{value}</span>
         )}
-        {suffix && <span className="text-sm font-sans ml-1 text-text-secondary">{suffix}</span>}
+        {suffix && <span className="text-sm font-sans ml-1 text-secondary">{suffix}</span>}
       </h3>
     </div>
   );

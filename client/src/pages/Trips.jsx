@@ -3,18 +3,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { 
   Plus, Route, MapPin, Compass, AlertTriangle, ShieldAlert,
-  ChevronRight, Calendar, User, Truck, HelpCircle
+  ChevronRight, Calendar, User, Truck, HelpCircle, X, GitBranch
 } from 'lucide-react';
 
 import { 
-  useVehicles, useDrivers, useTrips, useAppActions 
+  useVehicles, useDrivers, useTrips, useAppActions, useMaintenance, useExpenses
 } from '../context/AppContext';
+import { scoreVehicles, scoreDrivers } from '../utils/insights';
 import KPICard from '../components/common/KPICard';
 import StatusBadge from '../components/common/StatusBadge';
 import DataTable from '../components/common/DataTable';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
+import TripTimeline from '../components/common/Timeline';
 
 const STEP_INFOS = [
   { step: 1, title: "Origin & Dest.", desc: "Route mapping" },
@@ -26,6 +28,8 @@ const Trips = () => {
   const vehicles = useVehicles();
   const drivers = useDrivers();
   const trips = useTrips();
+  const maintenance = useMaintenance();
+  const expenses = useExpenses();
   
   const { dispatchTrip, completeTrip, cancelTrip } = useAppActions();
 
@@ -45,14 +49,62 @@ const Trips = () => {
   });
   const [formErrors, setFormErrors] = useState({});
 
+  // Override standard select view toggles
+  const [showAllVehicles, setShowAllVehicles] = useState(false);
+  const [showAllDrivers, setShowAllDrivers] = useState(false);
+
+  // Complete Trip modal state
+  const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+  const [completeFormValues, setCompleteFormValues] = useState({
+    finalOdometer: "",
+    fuelLiters: "",
+    fuelCost: ""
+  });
+  const [completeErrors, setCompleteErrors] = useState({});
+
+  const CURRENT_DATE = new Date("2026-07-12");
+  const isLicenseExpired = (expiryDateStr) => {
+    return new Date(expiryDateStr) < CURRENT_DATE;
+  };
+
   // Filter list of available vehicles/drivers (only Available and unexpired)
   const availableVehicles = useMemo(() => {
     return vehicles.filter(v => v.status === 'Available');
   }, [vehicles]);
 
   const availableDrivers = useMemo(() => {
-    return drivers.filter(d => d.status === 'Available');
+    return drivers.filter(d => d.status === 'Available' && !isLicenseExpired(d.licenseExpiryDate));
   }, [drivers]);
+
+  // Ranked recommendation lists
+  const recommendedVehicles = useMemo(() => {
+    if (activeStep !== 3 || !formValues.cargoWeight) return [];
+    return scoreVehicles(
+      vehicles,
+      maintenance,
+      expenses,
+      trips,
+      Number(formValues.cargoWeight)
+    );
+  }, [activeStep, vehicles, maintenance, expenses, trips, formValues.cargoWeight]);
+
+  const recommendedDrivers = useMemo(() => {
+    if (activeStep !== 3) return [];
+    return scoreDrivers(drivers);
+  }, [activeStep, drivers]);
+
+  // Auto-select top recommendation on reaching Step 3
+  useEffect(() => {
+    if (activeStep === 3) {
+      const topVeh = recommendedVehicles[0]?.vehicle;
+      const topDrv = recommendedDrivers[0]?.driver;
+      setFormValues(prev => ({
+        ...prev,
+        vehicleId: prev.vehicleId || (topVeh ? String(topVeh.id) : ""),
+        driverId: prev.driverId || (topDrv ? String(topDrv.id) : "")
+      }));
+    }
+  }, [activeStep, recommendedVehicles, recommendedDrivers]);
 
   // Find selected objects inside the form
   const selectedVehicleObj = useMemo(() => {
@@ -138,6 +190,53 @@ const Trips = () => {
     }
   };
 
+  const openCompleteModal = () => {
+    if (!detailVehicleObj || !selectedTripObj) return;
+    const estOdo = detailVehicleObj.odometer + selectedTripObj.plannedDistance;
+    setCompleteFormValues({
+      finalOdometer: String(estOdo),
+      fuelLiters: "",
+      fuelCost: ""
+    });
+    setCompleteErrors({});
+    setIsCompleteModalOpen(true);
+  };
+
+  const handleCompleteSubmit = async (e) => {
+    e.preventDefault();
+    const errors = {};
+    if (!completeFormValues.finalOdometer || isNaN(completeFormValues.finalOdometer) || Number(completeFormValues.finalOdometer) < detailVehicleObj.odometer) {
+      errors.finalOdometer = `Must be at least the starting odometer (${detailVehicleObj.odometer})`;
+    }
+    if (completeFormValues.fuelLiters && (isNaN(completeFormValues.fuelLiters) || Number(completeFormValues.fuelLiters) <= 0)) {
+      errors.fuelLiters = "Must be a positive volume";
+    }
+    if (completeFormValues.fuelCost && (isNaN(completeFormValues.fuelCost) || Number(completeFormValues.fuelCost) <= 0)) {
+      errors.fuelCost = "Must be a positive cost";
+    }
+    if ((completeFormValues.fuelLiters && !completeFormValues.fuelCost) || (!completeFormValues.fuelLiters && completeFormValues.fuelCost)) {
+      errors.fuelCost = "Both liters and cost must be specified to log fuel";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setCompleteErrors(errors);
+      return;
+    }
+
+    try {
+      await completeTrip(selectedTripObj.rawId, {
+        finalOdometer: Number(completeFormValues.finalOdometer),
+        fuelLiters: completeFormValues.fuelLiters ? Number(completeFormValues.fuelLiters) : undefined,
+        fuelCost: completeFormValues.fuelCost ? Number(completeFormValues.fuelCost) : undefined
+      });
+      toast.success(`Trip T${String(selectedTripObj.rawId).padStart(3, '0')} Completed!`);
+      setIsCompleteModalOpen(false);
+      setSelectedTripId(null);
+    } catch (err) {
+      // handled
+    }
+  };
+
   // Table Column Definitions
   const columns = [
     { key: "id", label: "Trip ID", width: "10%" },
@@ -146,9 +245,9 @@ const Trips = () => {
       label: "Route Detail",
       render: (row) => (
         <div className="flex items-center gap-1.5 text-xs">
-          <span className="font-semibold text-text-primary">{row.source}</span>
-          <ChevronRight size={12} className="text-text-muted shrink-0" />
-          <span className="font-semibold text-text-primary">{row.destination}</span>
+          <span className="font-semibold text-primary">{row.source}</span>
+          <ChevronRight size={12} className="text-muted shrink-0" />
+          <span className="font-semibold text-primary">{row.destination}</span>
         </div>
       )
     },
@@ -199,8 +298,8 @@ const Trips = () => {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="text-xl font-bold text-text-primary">Dispatches & Routes</h2>
-          <p className="text-xs text-text-secondary">Dispatch logistics routes and manage trip execution stages.</p>
+          <h2 className="text-xl font-bold text-primary">Dispatches & Routes</h2>
+          <p className="text-xs text-secondary">Dispatch logistics routes and manage trip execution stages.</p>
         </div>
         <Button onClick={() => setIsModalOpen(true)}>
           <Plus size={16} />
@@ -245,13 +344,13 @@ const Trips = () => {
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200 ${
                     active ? 'bg-accent text-[#0B0E14]' : 
                     completed ? 'bg-status-available/20 text-status-available border border-status-available/30' : 
-                    'bg-input border border-default text-text-muted'
+                    'bg-input border border-default text-muted'
                   }`}>
                     {step}
                   </div>
                   <div className="hidden sm:block">
-                    <p className={`text-[10px] font-bold uppercase tracking-wider ${active ? 'text-text-primary' : 'text-text-muted'}`}>{title}</p>
-                    <p className="text-[9px] text-text-muted/65 mt-0.5">{desc}</p>
+                    <p className={`text-[10px] font-bold uppercase tracking-wider ${active ? 'text-primary' : 'text-muted'}`}>{title}</p>
+                    <p className="text-[9px] text-muted/65 mt-0.5">{desc}</p>
                   </div>
                 </div>
               );
@@ -317,45 +416,155 @@ const Trips = () => {
             {activeStep === 3 && (
               <div className="space-y-4">
                 
-                {/* Vehicle Selection dropdown */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary select-none">
-                    Select Available Vehicle
-                  </label>
-                  <select
-                    name="vehicleId"
-                    value={formValues.vehicleId}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-input text-text-primary text-sm rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
-                  >
-                    <option value="">-- Select Available Vehicle --</option>
-                    {availableVehicles.map(v => (
-                      <option key={v.id} value={v.id}>
-                        {v.regNumber} — {v.name} (Cap: {v.maxLoadCapacity.toLocaleString()} kg)
-                      </option>
-                    ))}
-                  </select>
+                {/* Recommended Vehicles Section */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center select-none">
+                    <label className="text-xs font-bold uppercase tracking-wider text-secondary">
+                      Select Vehicle (Smart Recommendation)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowAllVehicles(!showAllVehicles)}
+                      className="text-[10px] text-accent hover:underline font-semibold"
+                    >
+                      {showAllVehicles ? "Show Recommendations" : "Show All Available"}
+                    </button>
+                  </div>
+
+                  {!showAllVehicles ? (
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {recommendedVehicles.slice(0, 3).map((item) => {
+                        const v = item.vehicle;
+                        const matchPct = Math.round(item.score * 100);
+                        const isSelected = String(v.id) === String(formValues.vehicleId);
+                        return (
+                          <div
+                            key={v.id}
+                            type="button"
+                            onClick={() => setFormValues(prev => ({ ...prev, vehicleId: String(v.id) }))}
+                            className={`p-3 rounded-lg border transition-all cursor-pointer text-left relative flex justify-between items-center ${
+                              isSelected
+                                ? 'bg-accent/5 border-accent shadow-md shadow-accent/10'
+                                : 'bg-[#0B0E14]/40 border-default hover:border-accent/40'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1 pr-4">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-xs text-primary">{v.regNumber}</span>
+                                <span className="text-[10px] text-secondary truncate">— {v.name}</span>
+                              </div>
+                              <p className="text-[9px] text-muted mt-1 leading-relaxed">
+                                Cap: {v.maxLoadCapacity.toLocaleString()} kg · Odometer: {v.odometer.toLocaleString()} km
+                              </p>
+                              <p className="text-[8px] text-accent/80 font-medium mt-0.5 truncate italic">
+                                {item.reason}
+                              </p>
+                            </div>
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full select-none shrink-0 ${
+                              matchPct >= 80 ? 'bg-status-available/10 text-status-available border border-status-available/20' : 'bg-status-shop/10 text-status-shop border border-status-shop/20'
+                            }`}>
+                              {matchPct}% Match
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {recommendedVehicles.length === 0 && (
+                        <div className="text-center py-4 bg-card border border-default rounded-lg text-xs text-muted select-none">
+                          No suitable available vehicles found for this weight load.
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <select
+                      name="vehicleId"
+                      value={formValues.vehicleId}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 bg-input text-primary text-sm rounded-lg border border-default focus:outline-none focus:border-focus transition-all duration-200"
+                    >
+                      <option value="">-- Select Available Vehicle --</option>
+                      {availableVehicles.map(v => (
+                        <option key={v.id} value={v.id}>
+                          {v.regNumber} — {v.name} (Cap: {v.maxLoadCapacity.toLocaleString()} kg)
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   {formErrors.vehicleId && <p className="text-[10px] text-status-retired font-medium">{formErrors.vehicleId}</p>}
                 </div>
 
-                {/* Driver Selection dropdown */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary select-none">
-                    Assign Driver (Available & Unexpired)
-                  </label>
-                  <select
-                    name="driverId"
-                    value={formValues.driverId}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-input text-[#E5E7EB] text-sm rounded-lg border border-default focus:outline-none focus:border-border-focus transition-all duration-200"
-                  >
-                    <option value="">-- Assign Available Operator --</option>
-                    {availableDrivers.map(d => (
-                      <option key={d.id} value={d.id}>
-                        {d.name} — Class: {d.licenseCategory} (Safety: {d.safetyScore}%)
-                      </option>
-                    ))}
-                  </select>
+                {/* Recommended Drivers Section */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center select-none">
+                    <label className="text-xs font-bold uppercase tracking-wider text-secondary">
+                      Assign Operator (Smart Recommendation)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowAllDrivers(!showAllDrivers)}
+                      className="text-[10px] text-accent hover:underline font-semibold"
+                    >
+                      {showAllDrivers ? "Show Recommendations" : "Show All Available"}
+                    </button>
+                  </div>
+
+                  {!showAllDrivers ? (
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {recommendedDrivers.slice(0, 3).map((item) => {
+                        const d = item.driver;
+                        const matchPct = Math.round(item.score * 100);
+                        const isSelected = String(d.id) === String(formValues.driverId);
+                        return (
+                          <div
+                            key={d.id}
+                            type="button"
+                            onClick={() => setFormValues(prev => ({ ...prev, driverId: String(d.id) }))}
+                            className={`p-3 rounded-lg border transition-all cursor-pointer text-left relative flex justify-between items-center ${
+                              isSelected
+                                ? 'bg-accent/5 border-accent shadow-md shadow-accent/10'
+                                : 'bg-[#0B0E14]/40 border-default hover:border-accent/40'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1 pr-4">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-xs text-primary">{d.name}</span>
+                                <span className="text-[10px] text-secondary font-mono">({d.licenseCategory})</span>
+                              </div>
+                              <p className="text-[9px] text-muted mt-1 leading-relaxed">
+                                Safety Score: {d.safetyScore}% · Completion: {d.tripCompletionPct}%
+                              </p>
+                              <p className="text-[8px] text-accent/80 font-medium mt-0.5 truncate italic">
+                                {item.reason}
+                              </p>
+                            </div>
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full select-none shrink-0 ${
+                              matchPct >= 80 ? 'bg-status-available/10 text-status-available border border-status-available/20' : 'bg-status-shop/10 text-status-shop border border-status-shop/20'
+                            }`}>
+                              {matchPct}% Match
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {recommendedDrivers.length === 0 && (
+                        <div className="text-center py-4 bg-card border border-default rounded-lg text-xs text-muted select-none">
+                          No available drivers found.
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <select
+                      name="driverId"
+                      value={formValues.driverId}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 bg-input text-[#E5E7EB] text-sm rounded-lg border border-default focus:outline-none focus:border-focus transition-all duration-200"
+                    >
+                      <option value="">-- Assign Available Operator --</option>
+                      {availableDrivers.map(d => (
+                        <option key={d.id} value={d.id}>
+                          {d.name} — Class: {d.licenseCategory} (Safety: {d.safetyScore}%)
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   {formErrors.driverId && <p className="text-[10px] text-status-retired font-medium">{formErrors.driverId}</p>}
                 </div>
 
@@ -409,17 +618,17 @@ const Trips = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="relative z-10 w-full max-w-lg h-full bg-sidebar border-l border-default p-6 shadow-2xl flex flex-col overflow-hidden text-text-primary"
+              className="relative z-10 w-full max-w-lg h-full bg-sidebar border-l border-default p-6 shadow-2xl flex flex-col overflow-hidden text-primary"
             >
               {/* Drawer Header */}
               <div className="flex items-center justify-between border-b border-default pb-4 mb-5">
                 <div>
                   <h3 className="text-lg font-bold">Dispatch Detail</h3>
-                  <span className="font-mono text-xs text-text-secondary select-all">{selectedTripObj.id}</span>
+                  <span className="font-mono text-xs text-secondary select-all">{selectedTripObj.id}</span>
                 </div>
                 <button
                   onClick={() => setSelectedTripId(null)}
-                  className="text-text-muted hover:text-text-primary rounded-md p-1 transition-colors"
+                  className="text-muted hover:text-primary rounded-md p-1 transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -430,7 +639,7 @@ const Trips = () => {
                 {/* Route Diagram card */}
                 <div className="bg-card border border-default p-4 rounded-xl space-y-3">
                   <div className="flex justify-between items-center select-none">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Route Path</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Route Path</span>
                     <StatusBadge status={selectedTripObj.status} />
                   </div>
                   <div className="flex items-center gap-3">
@@ -441,15 +650,24 @@ const Trips = () => {
                     </div>
                     <div className="flex flex-col gap-3 font-semibold text-xs">
                       <div>
-                        <span className="text-text-secondary font-medium mr-1.5">Origin:</span>
+                        <span className="text-secondary font-medium mr-1.5">Origin:</span>
                         <span>{selectedTripObj.source}</span>
                       </div>
                       <div>
-                        <span className="text-text-secondary font-medium mr-1.5">Destination:</span>
+                        <span className="text-secondary font-medium mr-1.5">Destination:</span>
                         <span>{selectedTripObj.destination}</span>
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Feature 1: Trip Timeline */}
+                <div className="bg-card border border-default p-4 rounded-xl">
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted mb-4 flex items-center gap-1.5">
+                    <GitBranch size={13} className="text-accent" />
+                    Dispatch Lifecycle
+                  </h4>
+                  <TripTimeline trip={selectedTripObj} />
                 </div>
 
                 {/* Details list */}
@@ -457,44 +675,44 @@ const Trips = () => {
                   {/* Distance & Load */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-card p-3 rounded-lg border border-default">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block">Cargo weight</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-muted block">Cargo weight</span>
                       <span className="font-mono font-bold mt-1 block text-sm">{selectedTripObj.cargoWeight.toLocaleString()} kg</span>
                     </div>
                     <div className="bg-card p-3 rounded-lg border border-default">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block">Planned Distance</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-muted block">Planned Distance</span>
                       <span className="font-mono font-bold mt-1 block text-sm">{selectedTripObj.plannedDistance} km</span>
                     </div>
                   </div>
 
                   {/* Assigned Vehicle details */}
                   <div className="bg-card p-4 rounded-xl border border-default space-y-2">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block">Vehicle details</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-muted block">Vehicle details</span>
                     {detailVehicleObj ? (
                       <div className="flex items-center gap-3 text-xs">
                         <Truck size={20} className="text-accent shrink-0" />
                         <div>
-                          <div className="font-semibold text-text-primary">{detailVehicleObj.name}</div>
-                          <div className="font-mono text-[10px] text-text-secondary mt-0.5">{detailVehicleObj.regNumber}</div>
+                          <div className="font-semibold text-primary">{detailVehicleObj.name}</div>
+                          <div className="font-mono text-[10px] text-secondary mt-0.5">{detailVehicleObj.regNumber}</div>
                         </div>
                       </div>
                     ) : (
-                      <span className="text-xs text-text-muted italic">No vehicle mapping found.</span>
+                      <span className="text-xs text-muted italic">No vehicle mapping found.</span>
                     )}
                   </div>
 
                   {/* Assigned Operator details */}
                   <div className="bg-card p-4 rounded-xl border border-default space-y-2">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block">Driver details</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-muted block">Driver details</span>
                     {detailDriverObj ? (
                       <div className="flex items-center gap-3 text-xs">
                         <User size={20} className="text-accent shrink-0" />
                         <div>
-                          <div className="font-semibold text-text-primary">{detailDriverObj.name}</div>
-                          <div className="text-[10px] text-text-secondary mt-0.5">License: {detailDriverObj.licenseNumber} (Cat {detailDriverObj.licenseCategory})</div>
+                          <div className="font-semibold text-primary">{detailDriverObj.name}</div>
+                          <div className="text-[10px] text-secondary mt-0.5">License: {detailDriverObj.licenseNumber} (Cat {detailDriverObj.licenseCategory})</div>
                         </div>
                       </div>
                     ) : (
-                      <span className="text-xs text-text-muted italic">No driver mapping found.</span>
+                      <span className="text-xs text-muted italic">No driver mapping found.</span>
                     )}
                   </div>
                 </div>
@@ -522,15 +740,7 @@ const Trips = () => {
 
                   {/* Complete dispatch */}
                   <Button
-                    onClick={async () => {
-                      try {
-                        await completeTrip(selectedTripObj.rawId);
-                        toast.success(`Trip T${String(selectedTripObj.rawId).padStart(3, '0')} Completed!`);
-                        setSelectedTripId(null);
-                      } catch {
-                        // handled
-                      }
-                    }}
+                    onClick={openCompleteModal}
                     className="flex-1 !py-2.5"
                   >
                     Complete Dispatch
@@ -541,6 +751,59 @@ const Trips = () => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Complete Trip Modal */}
+      <Modal
+        isOpen={isCompleteModalOpen}
+        onClose={() => {
+          setIsCompleteModalOpen(false);
+          setCompleteErrors({});
+        }}
+        title="Complete Dispatch Route"
+      >
+        <form onSubmit={handleCompleteSubmit} className="space-y-4 font-sans">
+          <p className="text-xs text-text-secondary leading-relaxed">
+            Record final odometer readings and optionally log any fuel consumed to complete trip <strong>T{selectedTripObj && String(selectedTripObj.rawId).padStart(3, '0')}</strong>.
+          </p>
+
+          <Input
+            label={`Final Odometer Reading (Starting: ${detailVehicleObj?.odometer || 0} km)`}
+            value={completeFormValues.finalOdometer}
+            onChange={(e) => setCompleteFormValues(p => ({ ...p, finalOdometer: e.target.value }))}
+            error={completeErrors.finalOdometer}
+            placeholder="e.g. 12150"
+            required
+            type="number"
+          />
+
+          <div className="border-t border-default pt-4 space-y-3">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block">Optional: Fuel Consumed</span>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Liters Refilled"
+                value={completeFormValues.fuelLiters}
+                onChange={(e) => setCompleteFormValues(p => ({ ...p, fuelLiters: e.target.value }))}
+                error={completeErrors.fuelLiters}
+                placeholder="e.g. 45"
+                type="number"
+              />
+              <Input
+                label="Total Fuel Cost ($)"
+                value={completeFormValues.fuelCost}
+                onChange={(e) => setCompleteFormValues(p => ({ ...p, fuelCost: e.target.value }))}
+                error={completeErrors.fuelCost}
+                placeholder="e.g. 68"
+                type="number"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-default select-none">
+            <Button variant="secondary" onClick={() => setIsCompleteModalOpen(false)}>Cancel</Button>
+            <Button type="submit">Complete Trip & Save</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

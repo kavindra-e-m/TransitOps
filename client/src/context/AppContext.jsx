@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
-import { getVehiclesAPI, createVehicleAPI, updateVehicleAPI } from '../api/vehicles';
-import { getDriversAPI, createDriverAPI, updateDriverAPI, updateDriverStatusAPI } from '../api/drivers';
+import { getVehiclesAPI, createVehicleAPI, updateVehicleAPI, deleteVehicleAPI } from '../api/vehicles';
+import { getDriversAPI, createDriverAPI, updateDriverAPI, updateDriverStatusAPI, deleteDriverAPI } from '../api/drivers';
 import { getTripsAPI, createTripAPI, dispatchTripAPI, completeTripAPI, cancelTripAPI } from '../api/trips';
 import { getMaintenanceAPI, createMaintenanceAPI, updateMaintenanceStatusAPI } from '../api/maintenance';
 import { getFuelLogsAPI, createFuelLogAPI, getExpensesAPI, createExpenseAPI } from '../api/fuelExpenses';
@@ -213,9 +213,49 @@ export const AppProvider = ({ children }) => {
     return dispatched;
   };
 
-  const completeTrip = async (tripId) => {
+  const completeTrip = async (tripId, data = {}) => {
     const rawId = typeof tripId === 'string' ? Number(tripId.replace('T', '')) : tripId;
-    await completeTripAPI(rawId);
+    const rawData = {
+      final_odometer: data.finalOdometer,
+      fuel_liters: data.fuelLiters,
+      fuel_cost: data.fuelCost
+    };
+    await completeTripAPI(rawId, rawData);
+    await refreshAllData();
+  };
+
+  const deleteVehicle = async (vehicleId) => {
+    await deleteVehicleAPI(vehicleId);
+    await refreshAllData();
+  };
+
+  const createDriver = async (driver) => {
+    const raw = {
+      name: driver.name,
+      license_no: driver.licenseNumber,
+      license_category: driver.licenseCategory,
+      license_expiry: driver.licenseExpiryDate,
+      contact: driver.contactNumber
+    };
+    const res = await createDriverAPI(raw);
+    await refreshAllData();
+    return res;
+  };
+
+  const updateDriver = async (id, driver) => {
+    const raw = {
+      name: driver.name,
+      license_category: driver.licenseCategory,
+      license_expiry: driver.licenseExpiryDate,
+      contact: driver.contactNumber
+    };
+    const res = await updateDriverAPI(id, raw);
+    await refreshAllData();
+    return res;
+  };
+
+  const deleteDriver = async (driverId) => {
+    await deleteDriverAPI(driverId);
     await refreshAllData();
   };
 
@@ -289,7 +329,11 @@ export const AppProvider = ({ children }) => {
         cancelTrip,
         addMaintenanceRecord,
         closeMaintenanceRecord,
-        addExpense
+        addExpense,
+        deleteVehicle,
+        createDriver,
+        updateDriver,
+        deleteDriver
       }}
     >
       {children}
@@ -347,6 +391,10 @@ export const useAppActions = () => {
     cancelTrip: context.cancelTrip,
     addMaintenanceRecord: context.addMaintenanceRecord,
     closeMaintenanceRecord: context.closeMaintenanceRecord,
-    addExpense: context.addExpense
+    addExpense: context.addExpense,
+    deleteVehicle: context.deleteVehicle,
+    createDriver: context.createDriver,
+    updateDriver: context.updateDriver,
+    deleteDriver: context.deleteDriver
   };
 };

@@ -9,6 +9,7 @@ const rbac = require('../middleware/rbac');
 router.use(auth);
 
 router.get('/', vehicleController.getAll);
+router.get('/location', vehicleController.getLocations);
 router.get('/check-reg/:regNo', vehicleController.checkReg);
 
 const vehicleValidation = [
@@ -23,5 +24,6 @@ const vehicleValidation = [
 router.post('/', rbac('Fleet Manager', 'Dispatcher'), vehicleValidation, vehicleController.create);
 router.put('/:id', rbac('Fleet Manager', 'Dispatcher'), vehicleValidation, vehicleController.update);
 router.get('/:id/history', vehicleController.getHistory);
+router.delete('/:id', rbac('Fleet Manager'), vehicleController.delete);
 
 module.exports = router;

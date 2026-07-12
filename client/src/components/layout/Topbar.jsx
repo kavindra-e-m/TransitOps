@@ -15,12 +15,12 @@ const Topbar = () => {
         <div className="relative w-full max-w-xs group">
           <Search 
             size={14} 
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" 
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary group-focus-within:text-accent transition-colors" 
           />
           <input 
             type="text" 
             placeholder="Search fleet, routes, IDs..." 
-            className="w-full bg-surface-container-lowest border border-outline-variant focus:border-accent focus:ring-1 focus:ring-accent/20 rounded-md py-1.5 pl-10 pr-4 text-xs text-text-primary placeholder:text-text-secondary transition-all outline-none"
+            className="w-full bg-surface-container-lowest border border-outline-variant focus:border-accent focus:ring-1 focus:ring-accent/20 rounded-md py-1.5 pl-10 pr-4 text-xs text-primary placeholder:text-secondary transition-all outline-none"
           />
         </div>
       </div>
@@ -30,7 +30,7 @@ const Topbar = () => {
         {/* Alerts Bell */}
         <button 
           onClick={() => alert("No new notifications")}
-          className="p-2 text-text-secondary hover:text-accent transition-colors relative"
+          className="p-2 text-secondary hover:text-accent transition-colors relative"
         >
           <Bell size={16} />
           <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-status-retired rounded-full animate-ping"></span>
@@ -39,7 +39,7 @@ const Topbar = () => {
         {/* Theme Toggler */}
         <button 
           onClick={() => alert("System dark mode active.")}
-          className="p-2 text-text-secondary hover:text-accent transition-colors"
+          className="p-2 text-secondary hover:text-accent transition-colors"
         >
           <Moon size={16} />
         </button>
@@ -49,10 +49,10 @@ const Topbar = () => {
         {/* Profile Card */}
         <div className="flex items-center gap-3 cursor-pointer group select-none">
           <div className="text-right leading-tight">
-            <p className="text-xs font-bold text-text-primary group-hover:text-accent transition-colors">
+            <p className="text-xs font-bold text-primary group-hover:text-accent transition-colors">
               {user?.name || 'Dispatcher'}
             </p>
-            <p className="text-[10px] text-text-secondary">
+            <p className="text-[10px] text-secondary">
               {role || 'North Sector'}
             </p>
           </div>

@@ -6,7 +6,7 @@ const Button = ({ children, variant = 'primary', disabled = false, onClick, type
   
   const variants = {
     primary: "bg-accent hover:bg-accent-hover text-[#0B0E14] shadow-lg shadow-accent/10 border border-transparent",
-    secondary: "bg-transparent border border-default text-primary hover:border-text-secondary hover:text-text-primary"
+    secondary: "bg-transparent border border-default text-primary hover:border-text-secondary hover:text-primary"
   };
 
   const disabledStyle = "opacity-40 cursor-not-allowed pointer-events-none";

@@ -18,6 +18,22 @@ exports.getAll = (req, res) => {
   res.json(vehicles);
 };
 
+exports.getLocations = (req, res) => {
+  const query = `
+    SELECT v.id, v.name, v.reg_no, v.status, v.capacity, v.latitude, v.longitude,
+           d.name as driver_name
+    FROM vehicles v
+    LEFT JOIN trips t ON t.vehicle_id = v.id AND t.status = 'Dispatched'
+    LEFT JOIN drivers d ON d.id = t.driver_id
+  `;
+  try {
+    const locations = db.prepare(query).all();
+    res.json(locations);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch locations.' });
+  }
+};
+
 exports.checkReg = (req, res) => {
   const { regNo } = req.params;
   const vehicle = db.prepare('SELECT id FROM vehicles WHERE reg_no = ?').get(regNo);
@@ -68,4 +84,28 @@ exports.getHistory = (req, res) => {
   const trips = db.prepare('SELECT * FROM trips WHERE vehicle_id = ? ORDER BY created_at DESC').all(id);
   const maintenance = db.prepare('SELECT * FROM maintenance_logs WHERE vehicle_id = ? ORDER BY date DESC').all(id);
   res.json({ trips, maintenance });
+};
+
+exports.delete = (req, res) => {
+  const { id } = req.params;
+  try {
+    // Check if vehicle has active dispatched trips
+    const activeTrips = db.prepare("SELECT id FROM trips WHERE vehicle_id = ? AND status = 'Dispatched'").get(id);
+    if (activeTrips) {
+      return res.status(400).json({ error: 'Cannot delete vehicle with active dispatched trips.' });
+    }
+
+    // Check if vehicle is in active maintenance
+    const activeMaint = db.prepare("SELECT id FROM maintenance_logs WHERE vehicle_id = ? AND status IN ('Scheduled', 'In Progress')").get(id);
+    if (activeMaint) {
+      return res.status(400).json({ error: 'Cannot delete vehicle currently in maintenance.' });
+    }
+
+    db.prepare('DELETE FROM vehicles WHERE id = ?').run(id);
+    const io = req.app.get('io');
+    io.emit('telemetry_update', { type: 'VEHICLE_DELETED', payload: { id: Number(id) } });
+    res.json({ message: 'Vehicle deleted successfully.', id: Number(id) });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete vehicle.' });
+  }
 };

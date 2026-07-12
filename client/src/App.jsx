@@ -16,6 +16,7 @@ import Maintenance from './pages/Maintenance';
 import FuelExpenses from './pages/FuelExpenses';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
+import FleetMap from './pages/FleetMap';
 
 const AppShell = ({ children }) => (
   <div className="flex min-h-screen bg-primary">
@@ -47,6 +48,7 @@ const App = () => {
         <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
         <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
         <Route path="/fleet" element={<Protected><Fleet /></Protected>} />
+        <Route path="/map" element={<Protected><FleetMap /></Protected>} />
         <Route path="/drivers" element={<Protected><Drivers /></Protected>} />
         <Route path="/trips" element={<Protected><Trips /></Protected>} />
         <Route path="/maintenance" element={<Protected><Maintenance /></Protected>} />
