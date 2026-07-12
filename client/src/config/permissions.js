@@ -30,6 +30,16 @@ export const PERMISSIONS = {
     analytics:    'none',
     settings:     'view',
   },
+  'Dispatcher': {
+    dashboard:    'view',
+    fleet:        'view',
+    drivers:      'view',
+    trips:        'edit',
+    maintenance:  'view',
+    fuelExpenses: 'none',
+    analytics:    'none',
+    settings:     'view',
+  },
   'Safety Officer': {
     dashboard:    'view',
     fleet:        'view',

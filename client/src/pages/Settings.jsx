@@ -11,12 +11,16 @@ import Input from '../components/common/Input';
 const ROLE_COLOR = {
   'Fleet Manager':     'text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]/20',
   'Driver':            'text-[#60A5FA] bg-[#60A5FA]/10 border-[#60A5FA]/20',
+  'Dispatcher':        'text-[#60A5FA] bg-[#60A5FA]/10 border-[#60A5FA]/20',
   'Safety Officer':    'text-[#22C55E] bg-[#22C55E]/10 border-[#22C55E]/20',
   'Financial Analyst': 'text-[#F97316] bg-[#F97316]/10 border-[#F97316]/20',
 };
 
 const Settings = () => {
   const { user, role } = useAuth();
+
+  // Available roles for column rendering (must match PERMISSIONS keys)
+  const rolesList = ['Fleet Manager', 'Dispatcher', 'Safety Officer', 'Financial Analyst'];
 
   // General settings state
   const [depotName, setDepotName] = useState('Central Depot');
@@ -28,8 +32,7 @@ const Settings = () => {
   const [rbacMatrix, setRbacMatrix] = useState({});
   const [loading, setLoading] = useState(true);
 
-  // Available roles for column rendering (must match PERMISSIONS keys)
-  const rolesList = ['Fleet Manager', 'Driver', 'Safety Officer', 'Financial Analyst'];
+
 
   // My access modules derived from frontend permissions config
   const myPermissions = PERMISSIONS[role] || {};
