@@ -11,6 +11,7 @@ A full-stack fleet and logistics management platform built with React, Vite, Tai
 | Frontend | React 18, Vite, Tailwind CSS, Framer Motion |
 | State Management | React Context API (AuthContext, AppContext) |
 | Charts | Recharts |
+| Maps | React Leaflet (OpenStreetMap) |
 | Backend | Node.js, Express |
 | Database | SQLite (better-sqlite3) |
 | Auth | JWT, bcrypt |
@@ -32,7 +33,9 @@ transitops/
 │   │   ├── context/
 │   │   │   ├── AuthContext.jsx    # Auth state — user, role, token, login, signup, logout
 │   │   │   └── AppContext.jsx     # Global data state — vehicles, drivers, trips, maintenance, expenses
-│   │   ├── pages/                 # Login, Dashboard, Fleet, Drivers, Trips, Maintenance, FuelExpenses, Analytics, Settings
+│   │   ├── hooks/
+│   │   │   └── usePermission.js   # RBAC permission hook
+│   │   ├── pages/                 # Login, Dashboard, Fleet, Drivers, Trips, Maintenance, FuelExpenses, Analytics, FleetMap, Settings
 │   │   └── utils/                 # exportCSV.js, insights.js, validators.js
 │   ├── index.html
 │   ├── package.json
@@ -48,6 +51,7 @@ transitops/
 │   │       ├── schema.sql         # Table definitions
 │   │       ├── seed.js            # Seed data
 │   │       └── transitops.db      # SQLite database file
+│   ├── rbacConfig.json            # Role-permission matrix config
 │   └── package.json
 ├── docs/
 │   └── api-spec.md
@@ -102,12 +106,18 @@ PORT=5000
 - Sign In with JWT-based authentication
 - Role-based access control (RBAC) — Fleet Manager, Dispatcher, Safety Officer, Financial Analyst
 - Account lockout after 5 failed login attempts (15-minute lock)
+- `usePermission` hook for per-page, per-role access guards
 
 ### Dashboard
-- 7 live KPI cards — Active Vehicles, Available, In Maintenance, Active Trips, Pending Trips, Drivers On Duty, Fleet Utilization %
-- Vehicle type and status filters
-- Recent trips table with status badges
-- Animated vehicle status breakdown bars
+- 8 live KPI cards — Fleet Utilization %, Active Vehicles, Available Vehicles, In Maintenance, Active Trips, Pending Trips, Drivers On Duty, On-Time Performance %
+- Fleet filter bar — filter KPIs by Vehicle Type, Status, and Region (North/South) in real-time
+- GPS cluster map widget with animated pulse markers showing truck/van distribution and delay clusters
+- Active Shipments table — live dispatched trips with route, cargo weight, and distance
+- Credentials Risk panel — flags drivers with expired or soon-to-expire licenses, click-through to Drivers page
+- Vehicles Pending Service panel — mileage progress bars flagging overdue/due-soon vehicles, click-through to Maintenance
+- Recent Alerts panel — mechanical failure, route deviation, and weather warning alerts with action buttons
+- Dispatcher Performance metrics — alert response time and optimization efficiency progress bars
+- Live Telemetry badge — shows WebSocket connection status (Live / Reconnecting)
 - Auto-refreshes every 20 seconds
 
 ### Fleet Management
@@ -115,6 +125,12 @@ PORT=5000
 - Add new vehicles with real-time registration number uniqueness check
 - Click any vehicle to view trip history and maintenance history in a slide-in drawer
 - KPI cards for total, available, on-trip, and in-maintenance counts
+
+### Fleet Map
+- Interactive Leaflet map (OpenStreetMap) showing real-time vehicle locations
+- Color-coded markers — green (Available), blue (On Trip), red (In Shop / other)
+- Popup on each marker showing vehicle name, registration, driver, status, and capacity
+- Auto-refreshes every 5 seconds via polling
 
 ### Driver Management
 - Driver roster with license expiry validation
@@ -143,15 +159,19 @@ PORT=5000
 - KPI cards for fuel spend, toll spend, repair spend
 
 ### Analytics
-- Fleet utilization chart
-- Fuel cost chart
-- Vehicle status breakdown chart
-- KPI summary cards
-- CSV export for reports
+- 4 KPI cards — Fuel Efficiency (L/100km), Fleet Utilization %, Operational Cost (₹), Vehicle ROI %
+- Monthly Operational Spend bar chart (Recharts)
+- Top Costliest Vehicles horizontal bar chart with animated progress bars
+- Vehicle Status breakdown chart
+- Fleet Utilization radial/gauge chart
+- Fuel Cost trend chart
+- Fuel Purchase Auditing & Anomalies — flags suspicious refuels with reasons, anomaly rate stats
+- CSV export for reports (Fleet Manager / Financial Analyst only)
+- Access restricted for roles without `view_analytics` permission (403 guard)
 
 ### Settings
 - View and update system settings
-- RBAC matrix viewer
+- RBAC matrix viewer — shows all role-permission mappings from `rbacConfig.json`
 
 ---
 
@@ -173,6 +193,7 @@ Base URL: `http://localhost:5000/api`
 | PUT | `/vehicles/:id` | Update vehicle |
 | GET | `/vehicles/:id/history` | Vehicle trip + maintenance history |
 | GET | `/vehicles/check-reg/:regNo` | Check registration uniqueness |
+| GET | `/vehicles/locations` | All vehicle GPS coordinates for Fleet Map |
 
 ### Drivers
 | Method | Endpoint | Description |
@@ -210,9 +231,9 @@ Base URL: `http://localhost:5000/api`
 ### Analytics
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/analytics/summary` | Fleet summary KPIs |
-| GET | `/analytics/monthly-revenue` | Monthly revenue data |
-| GET | `/analytics/top-costliest-vehicles` | Top costliest vehicles |
+| GET | `/analytics/summary` | Fleet summary KPIs (utilization, fuel efficiency, operational cost, ROI) |
+| GET | `/analytics/monthly-revenue` | Monthly operational spend data |
+| GET | `/analytics/top-costliest-vehicles` | Top costliest vehicles by total spend |
 
 ### Settings & RBAC
 | Method | Endpoint | Description |
