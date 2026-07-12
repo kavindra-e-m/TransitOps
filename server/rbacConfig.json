@@ -1,0 +1,6 @@
+{
+  "Fleet Manager": ["manage_vehicles", "manage_drivers", "manage_settings", "dispatch_trips", "manage_maintenance", "view_analytics", "manage_expenses"],
+  "Dispatcher": ["dispatch_trips", "view_vehicles", "view_drivers"],
+  "Safety Officer": ["manage_maintenance", "view_drivers", "view_vehicles"],
+  "Financial Analyst": ["view_analytics", "manage_expenses", "view_vehicles"]
+}
