@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { 
-  BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, Bar as RechartsBar 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
+  ResponsiveContainer 
 } from 'recharts';
 import { TrendingUp, Coins, Activity, Percent, ShieldOff, AlertTriangle } from 'lucide-react';
 
@@ -301,4 +301,3 @@ const Analytics = () => {
 
 export default Analytics;
 export { Analytics };
-
