@@ -1,1 +1,30 @@
-const express = require('express'); const router = express.Router(); router.get('/', (req, res) => res.json([{ id: 1, source: 'A', destination: 'B', vehicle_id: 1, driver_id: 1, cargo_weight: 1000, planned_distance: 50, status: 'Draft' }])); router.get('/available-vehicles', (req, res) => res.json([{ id: 1, reg_no: 'VAN-05', name: 'Ford Transit', capacity: 1500 }])); router.get('/available-drivers', (req, res) => res.json([{ id: 1, name: 'Alex Mercer' }])); router.post('/', (req, res) => res.status(201).json({ id: 2, ...req.body, status: 'Draft' })); router.patch('/:id/dispatch', (req, res) => res.json({ id: req.params.id, status: 'Dispatched' })); router.patch('/:id/complete', (req, res) => res.json({ id: req.params.id, status: 'Completed' })); router.patch('/:id/cancel', (req, res) => res.json({ id: req.params.id, status: 'Cancelled' })); module.exports = router;
+const express = require('express');
+const { body } = require('express-validator');
+const router = express.Router();
+const tripController = require('../controllers/tripController');
+const validate = require('../middleware/validate');
+const auth = require('../middleware/auth');
+const rbac = require('../middleware/rbac');
+
+router.use(auth);
+
+router.get('/', tripController.getAll);
+router.get('/available-vehicles', tripController.getAvailableVehicles);
+router.get('/available-drivers', tripController.getAvailableDrivers);
+
+const tripValidation = [
+  body('source').notEmpty().withMessage('Source is required'),
+  body('destination').notEmpty().withMessage('Destination is required'),
+  body('vehicle_id').isInt().withMessage('Vehicle ID is required'),
+  body('driver_id').isInt().withMessage('Driver ID is required'),
+  body('cargo_weight').isNumeric().withMessage('Cargo weight must be a number'),
+  body('planned_distance').isNumeric().withMessage('Planned distance must be a number'),
+  validate
+];
+
+router.post('/', rbac('Fleet Manager', 'Dispatcher'), tripValidation, tripController.create);
+router.patch('/:id/dispatch', rbac('Fleet Manager', 'Dispatcher'), tripController.dispatch);
+router.patch('/:id/complete', rbac('Fleet Manager', 'Dispatcher'), tripController.complete);
+router.patch('/:id/cancel', rbac('Fleet Manager', 'Dispatcher'), tripController.cancel);
+
+module.exports = router;
